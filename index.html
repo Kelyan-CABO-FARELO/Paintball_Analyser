@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyseur Tactique Paintball Sportif Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>🎯 Analyseur Tactique Pro - Paintball Sportif</h1>
+    <p class="subtitle">Analyse des lignes de tir avec gestion de hauteur des obstacles</p>
+
+    <div class="main-grid">
+        <!-- PANNEAU DE CONTRÔLE GAUCHE -->
+        <div class="controls">
+            <!-- Section chargement d'image -->
+            <div class="panel panel-green">
+                <h3>📁 Terrain</h3>
+                <input type="file" id="imageInput" accept="image/*">
+                <button id="autoDetectBtn" style="margin-top: 10px; padding: 8px; font-size: 12px;" class="btn-success" disabled>
+                    🤖 Détection automatique
+                </button>
+                <p id="detectionStatus"></p>
+            </div>
+
+            <!-- Section sélection d'obstacles -->
+            <div class="panel panel-purple">
+                <h3>🛡️ Type d'obstacle</h3>
+                <div class="obstacle-grid">
+                    <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
+                    <div class="obstacle-btn" data-type="dorito" data-height="medium">🔺 Dorito<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Can<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="brick" data-height="medium">🧱 Brique<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
+                    <div class="obstacle-btn" data-type="m" data-height="medium">📺 M/Télé<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="x" data-height="medium">❌ X-Bunker<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="cake" data-height="low">🍰 Cake<span class="height-badge height-low">BAS</span></div>
+                    <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
+                    <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
+                </div>
+                <p style="margin-top: 10px; font-size: 12px; color: #666;">
+                    Taille: <input type="range" id="sizeSlider" min="15" max="50" value="25" style="width: 100%">
+                    <span id="sizeValue">25</span>px
+                </p>
+            </div>
+
+            <!-- Section position du tireur -->
+            <div class="panel panel-blue">
+                <h3>🏃 Position du tireur</h3>
+                <div class="stance-selector">
+                    <div class="stance-btn active" data-stance="standing">🧍 Debout</div>
+                    <div class="stance-btn" data-stance="kneeling">🧎 Genou</div>
+                    <div class="stance-btn" data-stance="prone">🤸 Couché</div>
+                </div>
+                <p style="margin-top: 10px; font-size: 11px; color: #666;">
+                    🧍 Debout: tire par-dessus BAS et MOY<br>
+                    🧎 Genou: tire par-dessus BAS uniquement<br>
+                    🤸 Couché: bloqué par tous obstacles
+                </p>
+            </div>
+
+            <!-- Section équipe -->
+            <div class="panel panel-purple">
+                <h3>⚔️ Équipe du tireur</h3>
+                <div class="stance-selector">
+                    <div class="stance-btn active" data-team="left">⬅️ Équipe Gauche</div>
+                    <div class="stance-btn" data-team="right">➡️ Équipe Droite</div>
+                </div>
+                <p style="margin-top: 10px; font-size: 11px; color: #666;">
+                    Définit le côté ennemi (direction de tir principale)
+                </p>
+            </div>
+
+            <!-- Liste des tireurs -->
+            <div class="panel panel-blue">
+                <h3>👥 Tireurs (<span id="shooterCount">0</span>)</h3>
+                <div class="shooter-list" id="shooterList"></div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="panel panel-blue">
+                <h3>📖 Instructions</h3>
+                <ul>
+                    <li>• 🤖 Détection auto : zone + obstacles</li>
+                    <li>• Shift + Clic : ajouter tireur</li>
+                    <li>• Ctrl + Clic : supprimer</li>
+                    <li>• Les obstacles sont orientés automatiquement</li>
+                </ul>
+            </div>
+
+            <!-- Boutons d'action -->
+            <button id="calculateBtn" class="btn-primary" disabled>🎯 Calculer lignes de tir</button>
+            <button id="teamCoverageBtn" class="btn-success" disabled>👥 Couverture d'équipe</button>
+            <button id="resetBtn" class="btn-danger">🗑️ Tout réinitialiser</button>
+
+            <!-- Statistiques -->
+            <div class="panel panel-orange">
+                <h3>📊 Statistiques</h3>
+                <div class="stats">
+                    <strong>Obstacles :</strong> <span id="obstacleCount">0</span><br>
+                    <strong>Tireurs :</strong> <span id="shooterCountStats">0</span><br>
+                    <strong>Lignes actives :</strong> <span id="lineCount">0</span>
+                </div>
+                <div class="color-legend" style="margin-top: 15px;">
+                    <div class="legend-item"><div class="legend-color height-low"></div><span>BAS: Snake, Cake, Chavrou</span></div>
+                    <div class="legend-item"><div class="legend-color height-medium"></div><span>MOYEN: Dorito, Can, X, M/Télé, Brique</span></div>
+                    <div class="legend-item"><div class="legend-color height-high"></div><span>HAUT: Temple, Totem</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ZONE DE CANVAS (TERRAIN) -->
+        <div class="canvas-container">
+            <canvas id="canvas" width="1000" height="700"></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>

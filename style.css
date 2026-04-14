@@ -1,0 +1,316 @@
+/* ========================================
+   STYLES GÉNÉRAUX
+   ======================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.98);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    color: #1a1f3a;
+    margin-bottom: 10px;
+    font-size: 36px;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+
+/* ========================================
+   LAYOUT PRINCIPAL
+   ======================================== */
+.main-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
+}
+
+.controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* ========================================
+   PANNEAUX DE CONTRÔLE
+   ======================================== */
+.panel {
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid;
+}
+
+.panel-purple {
+    background: #f3e5f5;
+    border-color: #ab47bc;
+}
+
+.panel-blue {
+    background: #e3f2fd;
+    border-color: #42a5f5;
+}
+
+.panel-green {
+    background: #e8f5e9;
+    border-color: #66bb6a;
+}
+
+.panel-orange {
+    background: #fff3e0;
+    border-color: #ffa726;
+}
+
+.panel h3 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* ========================================
+   GRILLE D'OBSTACLES
+   ======================================== */
+.obstacle-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.obstacle-btn {
+    padding: 10px 6px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+    text-align: center;
+    position: relative;
+}
+
+.obstacle-btn:hover {
+    border-color: #ab47bc;
+    background: #f3e5f5;
+    transform: scale(1.05);
+}
+
+.obstacle-btn.active {
+    border-color: #ab47bc;
+    background: #ab47bc;
+    color: white;
+    font-weight: bold;
+}
+
+/* Badge de hauteur d'obstacle */
+.height-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: bold;
+}
+
+.height-low { background: #4caf50 !important; }
+.height-medium { background: #ff9800 !important; }
+.height-high { background: #f44336 !important; }
+
+/* ========================================
+   BOUTONS
+   ======================================== */
+button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: #333;
+}
+
+/* ========================================
+   CANVAS ET INPUT
+   ======================================== */
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border: 2px dashed #66bb6a;
+    border-radius: 8px;
+    cursor: pointer;
+    background: white;
+    font-size: 12px;
+}
+
+.canvas-container {
+    border: 4px solid #ab47bc;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+canvas {
+    display: block;
+    width: 100%;
+    cursor: crosshair;
+    background: #ffffff;
+}
+
+/* ========================================
+   LISTES ET STATS
+   ======================================== */
+.stats {
+    font-size: 14px;
+    line-height: 2;
+}
+
+.color-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.legend-color {
+    width: 30px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid #333;
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+li {
+    margin: 6px 0;
+    color: #1976d2;
+    font-size: 13px;
+}
+
+.shooter-list {
+    max-height: 150px;
+    overflow-y: auto;
+    background: white;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.shooter-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: #f5f5f5;
+    border-radius: 4px;
+}
+
+.shooter-delete {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.stance-selector {
+    display: flex;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+.stance-btn {
+    flex: 1;
+    padding: 8px;
+    border: 2px solid #ddd;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.stance-btn:hover {
+    border-color: #42a5f5;
+    background: #e3f2fd;
+}
+
+.stance-btn.active {
+    border-color: #42a5f5;
+    background: #42a5f5;
+    color: white;
+    font-weight: bold;
+}
+
+#detectionStatus {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #666;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 1200px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
