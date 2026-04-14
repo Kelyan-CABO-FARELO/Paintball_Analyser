@@ -2,69 +2,56 @@
 // VARIABLES GLOBALES ET CONFIGURATION
 // ========================================
 
-// Référence au canvas HTML et son contexte 2D
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
 // Variables d'état de l'application
-let loadedImage = null;           // Image du terrain chargée
-let obstacles = [];                // Liste des obstacles détectés/placés [{x, y, type, height, size, rotation}]
-let shooters = [];                 // Liste des tireurs (joueurs) [{x, y, id, stance, team, active}]
-let sightlines = [];               // Lignes de tir calculées [{x1, y1, x2, y2, shooterId}]
-let playZone = null;               // Polygone définissant la zone de jeu [{x, y}, {x, y}, ...]
+let loadedImage = null;
+let obstacles = [];
+let shooters = [];
+let sightlines = [];
 
-// Variables de sélection pour l'ajout manuel d'obstacles
-let selectedObstacleType = 'snake';      // Type d'obstacle sélectionné
-let selectedObstacleHeight = 'low';      // Hauteur de l'obstacle sélectionné
-let obstacleSize = 25;                   // Taille de l'obstacle en pixels
+// NOUVEAU : Variables pour les limites du terrain
+let fieldBounds = null; // Stockera {x, y, w, h}
+let isDrawingField = false;
+let fieldStartPos = null;
 
-// Variables de sélection pour l'ajout de tireurs
-let shooterStance = 'standing';    // Position du tireur (standing/kneeling/prone)
-let shooterTeam = 'left';          // Équipe du tireur (left/right)
+// Variables de sélection pour l'ajout
+let selectedObstacleType = 'snake';
+let selectedObstacleHeight = 'low';
+let obstacleSize = 25;
 
-// Mode d'affichage
-let showTeamCoverage = false;      // false = lignes individuelles, true = couverture d'équipe
+let shooterStance = 'standing';
+let shooterTeam = 'left';
 
 // ========================================
-// CONFIGURATION DES COULEURS PAR JOUEUR
+// CONFIGURATION DES COULEURS ET OBSTACLES
 // ========================================
-// Chaque joueur a une couleur unique pour ses lignes de tir
+
 const SHOOTER_COLORS = [
-    'rgba(255, 0, 0, 0.2)',      // Rouge - Joueur 1
-    'rgba(0, 0, 255, 0.2)',      // Bleu - Joueur 2
-    'rgba(255, 165, 0, 0.2)',    // Orange - Joueur 3
-    'rgba(148, 0, 211, 0.2)',    // Violet - Joueur 4
-    'rgba(0, 255, 255, 0.2)',    // Cyan - Joueur 5
-    'rgba(255, 20, 147, 0.2)',   // Rose - Joueur 6
-    'rgba(0, 255, 0, 0.2)',      // Vert - Joueur 7
-    'rgba(255, 255, 0, 0.2)'     // Jaune - Joueur 8
+    'rgba(255, 0, 0, 0.3)', 'rgba(0, 0, 255, 0.3)', 'rgba(255, 165, 0, 0.3)',
+    'rgba(148, 0, 211, 0.3)', 'rgba(0, 255, 255, 0.3)', 'rgba(255, 20, 147, 0.3)',
+    'rgba(0, 255, 0, 0.3)', 'rgba(255, 255, 0, 0.3)'
 ];
 
-// ========================================
-// CONFIGURATION DES TYPES D'OBSTACLES
-// ========================================
-// Définit les propriétés de chaque type d'obstacle
 const OBSTACLE_CONFIG = {
-    snake: { height: 'low', color: 'rgba(101, 67, 33, 0.7)' },      // Snake: obstacle bas, allongé
-    dorito: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },  // Dorito: obstacle moyen, triangulaire
-    can: { height: 'medium', color: 'rgba(160, 82, 45, 0.7)' },     // Can: obstacle moyen, cylindrique
-    brick: { height: 'medium', color: 'rgba(178, 34, 34, 0.7)' },   // Brique: obstacle moyen, rectangulaire
-    temple: { height: 'high', color: 'rgba(120, 60, 30, 0.7)' },    // Temple: obstacle haut, large
-    m: { height: 'medium', color: 'rgba(70, 70, 70, 0.7)' },        // M/Télé: obstacle moyen
-    x: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },       // X-Bunker: obstacle moyen en X
-    cake: { height: 'low', color: 'rgba(139, 90, 43, 0.7)' },       // Cake: obstacle bas, demi-cercle
-    goat: { height: 'low', color: 'rgba(245, 222, 179, 0.7)' },     // Chavrou: obstacle bas
-    totem: { height: 'high', color: 'rgba(105, 105, 105, 0.7)' }    // Totem: obstacle très haut, vertical
+    snake: { height: 'low', color: 'rgba(101, 67, 33, 0.7)' },
+    dorito: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },
+    can: { height: 'medium', color: 'rgba(160, 82, 45, 0.7)' },
+    brick: { height: 'medium', color: 'rgba(178, 34, 34, 0.7)' },
+    temple: { height: 'high', color: 'rgba(120, 60, 30, 0.7)' },
+    m: { height: 'medium', color: 'rgba(70, 70, 70, 0.7)' },
+    x: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },
+    cake: { height: 'low', color: 'rgba(139, 90, 43, 0.7)' },
+    goat: { height: 'low', color: 'rgba(245, 222, 179, 0.7)' },
+    totem: { height: 'high', color: 'rgba(105, 105, 105, 0.7)' }
 };
 
 // ========================================
-// GESTIONNAIRES D'ÉVÉNEMENTS - SÉLECTION
+// GESTIONNAIRES D'ÉVÉNEMENTS
 // ========================================
 
-/**
- * Gestion de la sélection d'obstacles
- * Permet à l'utilisateur de choisir le type d'obstacle à placer
- */
+// Boutons d'interface
 document.querySelectorAll('.obstacle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.obstacle-btn').forEach(b => b.classList.remove('active'));
@@ -74,36 +61,22 @@ document.querySelectorAll('.obstacle-btn').forEach(btn => {
     });
 });
 
-/**
- * Gestion des boutons de position du tireur et d'équipe
- * Met à jour les variables globales selon le bouton cliqué
- */
 document.querySelectorAll('.stance-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const parent = btn.parentElement;
         parent.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
 
-        if (btn.dataset.stance) {
-            shooterStance = btn.dataset.stance;
-        }
-        if (btn.dataset.team) {
-            shooterTeam = btn.dataset.team;
-        }
+        if (btn.dataset.stance) shooterStance = btn.dataset.stance;
+        if (btn.dataset.team) shooterTeam = btn.dataset.team;
     });
 });
 
-/**
- * Gestion du slider de taille d'obstacle
- */
 document.getElementById('sizeSlider').addEventListener('input', (e) => {
     obstacleSize = parseInt(e.target.value);
     document.getElementById('sizeValue').textContent = obstacleSize;
 });
 
-/**
- * Ajustement de la taille avec la molette de la souris
- */
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     obstacleSize = Math.max(15, Math.min(50, obstacleSize + (e.deltaY > 0 ? -2 : 2)));
@@ -111,14 +84,7 @@ canvas.addEventListener('wheel', (e) => {
     document.getElementById('sizeValue').textContent = obstacleSize;
 });
 
-// ========================================
-// CHARGEMENT D'IMAGE
-// ========================================
-
-/**
- * Gère le chargement de l'image du terrain
- * Active le bouton de détection automatique une fois l'image chargée
- */
+// Chargement de l'image
 document.getElementById('imageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -127,8 +93,8 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
             const img = new Image();
             img.onload = () => {
                 loadedImage = img;
-                document.getElementById('autoDetectBtn').disabled = false;
-                document.getElementById('detectionStatus').textContent = 'Image chargée. Cliquez sur Détection automatique.';
+                fieldBounds = null; // Reset les limites quand on change d'image
+                document.getElementById('detectionStatus').textContent = 'Image chargée.';
                 drawCanvas();
             };
             img.src = event.target.result;
@@ -137,184 +103,244 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
     }
 });
 
-// ========================================
-// DÉTECTION AUTOMATIQUE
-// ========================================
-
-/**
- * Lance l'analyse automatique de l'image
- * Détecte la zone de jeu et les obstacles
- */
-document.getElementById('autoDetectBtn').addEventListener('click', async () => {
-    document.getElementById('detectionStatus').textContent = '🔍 Analyse en cours...';
-    document.getElementById('autoDetectBtn').disabled = true;
-
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    try {
-        detectPlayZone();
-        detectObstacles();
-        document.getElementById('detectionStatus').textContent = `✅ Détection terminée : ${obstacles.length} obstacles trouvés`;
-        updateUI();
-    } catch (error) {
-        document.getElementById('detectionStatus').textContent = '❌ Erreur lors de la détection';
-        console.error(error);
-    }
-
-    document.getElementById('autoDetectBtn').disabled = false;
+// NOUVEAU : Bouton pour tracer le terrain
+document.getElementById('drawFieldBtn').addEventListener('click', () => {
+    isDrawingField = true;
+    fieldStartPos = null;
+    document.getElementById('detectionStatus').textContent = 'Tracez un rectangle sur l\'image (cliquer-glisser)';
+    document.getElementById('drawFieldBtn').style.opacity = '0.5'; // Effet visuel
 });
 
-/**
- * Détecte la zone de jeu à partir de l'image
- * Crée un polygone rectangulaire avec marge
- */
-function detectPlayZone() {
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+// ========================================
+// INTERFACE UI
+// ========================================
 
-    const margin = 20;
-    playZone = [
-        { x: margin, y: margin },
-        { x: canvas.width - margin, y: margin },
-        { x: canvas.width - margin, y: canvas.height - margin },
-        { x: margin, y: canvas.height - margin }
-    ];
+function updateUI() {
+    document.getElementById('obstacleCount').textContent = obstacles.length;
+    document.getElementById('shooterCount').textContent = shooters.length;
+    document.getElementById('shooterCountStats').textContent = shooters.length;
+    document.getElementById('lineCount').textContent = sightlines.length;
+
+    const hasShooters = shooters.length > 0;
+    document.getElementById('calculateBtn').disabled = !hasShooters;
+    document.getElementById('teamCoverageBtn').disabled = !hasShooters;
+
+    const list = document.getElementById('shooterList');
+    list.innerHTML = '';
+    shooters.forEach((s, index) => {
+        const div = document.createElement('div');
+        div.className = 'shooter-item';
+        let icon = s.stance === 'standing' ? '🧍' : s.stance === 'kneeling' ? '🧎' : '🤸';
+        div.innerHTML = `
+            <span>J${index + 1} ${icon} (${s.team === 'left' ? 'G' : 'D'})</span>
+            <button class="shooter-delete" onclick="removeShooter(${s.id})">X</button>
+        `;
+        list.appendChild(div);
+    });
 }
 
-/**
- * Détecte les obstacles dans l'image
- * Utilise flood fill pour identifier les régions sombres
- * Détermine le type selon la forme
- */
-function detectObstacles() {
-    obstacles = [];
+function removeShooter(id) {
+    shooters = shooters.filter(s => s.id !== id);
+    sightlines = sightlines.filter(l => l.shooterId !== id);
+    updateUI();
+    drawCanvas();
+}
 
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d');
-    tempCtx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+// ========================================
+// INTERACTION AVEC LE CANVAS (SOURIS)
+// ========================================
 
-    const imageData = tempCtx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    const visited = new Array(canvas.width * canvas.height).fill(false);
-    const minSize = 400;
+function getMousePos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
 
-    for (let y = 0; y < canvas.height; y += 5) {
-        for (let x = 0; x < canvas.width; x += 5) {
-            const idx = (y * canvas.width + x) * 4;
-            const r = data[idx];
-            const g = data[idx + 1];
-            const b = data[idx + 2];
-            const brightness = (r + g + b) / 3;
+canvas.addEventListener('mousedown', (e) => {
+    if (!loadedImage) return;
+    const pos = getMousePos(e);
 
-            if (brightness < 120 && !visited[y * canvas.width + x]) {
-                const region = floodFill(data, canvas.width, canvas.height, x, y, visited, 120);
+    // MODE : Tracer le terrain
+    if (isDrawingField) {
+        fieldStartPos = pos;
+        return;
+    }
 
-                if (region.length > minSize) {
-                    const centerX = region.reduce((sum, p) => sum + p.x, 0) / region.length;
-                    const centerY = region.reduce((sum, p) => sum + p.y, 0) / region.length;
+    // MODE : Ajout/Suppression classique
+    if (e.ctrlKey || e.metaKey) {
+        let removed = false;
+        const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
+        if (shooterIndex !== -1) { shooters.splice(shooterIndex, 1); removed = true; }
+        else {
+            const obsIndex = obstacles.findIndex(o => Math.hypot(o.x - pos.x, o.y - pos.y) < o.size + 10);
+            if (obsIndex !== -1) { obstacles.splice(obsIndex, 1); removed = true; }
+        }
+        if (removed) sightlines = [];
+    } else if (e.shiftKey) {
+        shooters.push({
+            id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam,
+            color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length]
+        });
+        sightlines = [];
+    } else {
+        obstacles.push({
+            x: pos.x, y: pos.y, type: selectedObstacleType, height: selectedObstacleHeight,
+            size: obstacleSize, rotation: 0
+        });
+        sightlines = [];
+    }
 
-                    const minX = Math.min(...region.map(p => p.x));
-                    const maxX = Math.max(...region.map(p => p.x));
-                    const minY = Math.min(...region.map(p => p.y));
-                    const maxY = Math.max(...region.map(p => p.y));
+    updateUI();
+    drawCanvas();
+});
 
-                    const width = maxX - minX;
-                    const height = maxY - minY;
-                    const area = region.length;
-                    const ratio = width / height;
+// NOUVEAU : Mouvement de souris (pour visualiser le rectangle en train d'être dessiné)
+canvas.addEventListener('mousemove', (e) => {
+    if (isDrawingField && fieldStartPos) {
+        const pos = getMousePos(e);
+        drawCanvas(); // Redessine tout
 
-                    let type, obstacleHeight, size, rotation = 0;
+        // Dessine le rectangle temporaire en pointillé
+        ctx.strokeStyle = '#ffff00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(fieldStartPos.x, fieldStartPos.y, pos.x - fieldStartPos.x, pos.y - fieldStartPos.y);
+        ctx.setLineDash([]);
+    }
+});
 
-                    if (ratio > 2.5) {
-                        type = 'snake';
-                        obstacleHeight = 'low';
-                        size = Math.min(width, height) / 2;
-                        rotation = 0;
-                    } else if (ratio < 0.4) {
-                        type = 'snake';
-                        obstacleHeight = 'low';
-                        size = Math.min(width, height) / 2;
-                        rotation = 90;
-                    } else if (ratio > 0.8 && ratio < 1.2) {
-                        if (area < 1500) {
-                            type = 'can';
-                            obstacleHeight = 'medium';
-                            size = Math.sqrt(area) / 3;
-                        } else {
-                            type = 'temple';
-                            obstacleHeight = 'high';
-                            size = Math.sqrt(area) / 4;
-                        }
-                    } else if (ratio > 1.2 && ratio < 2) {
-                        if (height > width) {
-                            type = 'brick';
-                            obstacleHeight = 'medium';
-                            size = width / 2;
-                            rotation = 0;
-                        } else {
-                            type = 'dorito';
-                            obstacleHeight = 'medium';
-                            size = Math.max(width, height) / 3;
-                        }
-                    } else {
-                        type = 'can';
-                        obstacleHeight = 'medium';
-                        size = Math.sqrt(area) / 3;
+// NOUVEAU : Relâchement du clic (valide les limites du terrain)
+canvas.addEventListener('mouseup', (e) => {
+    if (isDrawingField && fieldStartPos) {
+        const pos = getMousePos(e);
+
+        // Calcule le rectangle final
+        const w = Math.abs(pos.x - fieldStartPos.x);
+        const h = Math.abs(pos.y - fieldStartPos.y);
+
+        // Sécurité : éviter un terrain de 2 pixels si l'utilisateur a juste cliqué sans glisser
+        if (w > 20 && h > 20) {
+            fieldBounds = {
+                x: Math.min(fieldStartPos.x, pos.x),
+                y: Math.min(fieldStartPos.y, pos.y),
+                w: w,
+                h: h
+            };
+            document.getElementById('detectionStatus').textContent = 'Limites définies !';
+        } else {
+            document.getElementById('detectionStatus').textContent = 'Tracé annulé (trop petit).';
+        }
+
+        isDrawingField = false;
+        fieldStartPos = null;
+        document.getElementById('drawFieldBtn').style.opacity = '1';
+        sightlines = []; // Forcer le recalcul si on modifie les bords
+
+        updateUI();
+        drawCanvas();
+    }
+});
+
+// ========================================
+// MOTEUR DE RENDU (DESSIN)
+// ========================================
+
+function drawCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (loadedImage) {
+        ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
+    }
+
+    // NOUVEAU : Dessine les bordures du terrain
+    if (fieldBounds) {
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; // Jaune semi-transparent
+        ctx.lineWidth = 3;
+        ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
+    }
+
+    // Lignes de tir
+    sightlines.forEach(line => {
+        ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
+        ctx.strokeStyle = line.color; ctx.lineWidth = 1.5; ctx.stroke();
+    });
+
+    // Obstacles
+    obstacles.forEach(obs => {
+        const config = OBSTACLE_CONFIG[obs.type];
+        ctx.save(); ctx.translate(obs.x, obs.y); ctx.rotate(obs.rotation * Math.PI / 180);
+        ctx.fillStyle = config ? config.color : 'rgba(100,100,100,0.5)';
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(0, 0, obs.size, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke(); ctx.restore();
+    });
+
+    // Tireurs
+    shooters.forEach((s, index) => {
+        ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = s.color.replace('0.3', '1'); ctx.fill();
+        ctx.strokeStyle = s.team === 'left' ? '#000' : '#FFF'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = s.team === 'left' ? '#FFF' : '#000';
+        ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(index + 1, s.x, s.y);
+    });
+}
+
+// ========================================
+// ALGORITHME DE RAYCASTING (LIGNES DE TIR)
+// ========================================
+
+document.getElementById('calculateBtn').addEventListener('click', () => { calculateSightlines(); });
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+    if(confirm("Tout effacer (obstacles, joueurs, et terrain) ?")) {
+        obstacles = []; shooters = []; sightlines = []; fieldBounds = null;
+        updateUI(); drawCanvas();
+    }
+});
+
+function calculateSightlines() {
+    sightlines = [];
+
+    // NOUVEAU : Définition des limites du calcul (le terrain OU le canvas entier)
+    const minX = fieldBounds ? fieldBounds.x : 0;
+    const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;
+    const minY = fieldBounds ? fieldBounds.y : 0;
+    const maxY = fieldBounds ? fieldBounds.y + fieldBounds.h : canvas.height;
+
+    shooters.forEach(shooter => {
+        for (let angle = 0; angle < 360; angle += 1) {
+            const rad = angle * Math.PI / 180;
+            let currentX = shooter.x;
+            let currentY = shooter.y;
+            const step = 4;
+            let hit = false;
+
+            // On vérifie que la ligne de tir est bien à l'intérieur des bordures fixées !
+            while (!hit && currentX >= minX && currentX <= maxX && currentY >= minY && currentY <= maxY) {
+                currentX += Math.cos(rad) * step;
+                currentY += Math.sin(rad) * step;
+
+                for (let obs of obstacles) {
+                    const distance = Math.sqrt((currentX - obs.x)**2 + (currentY - obs.y)**2);
+                    if (distance <= obs.size) {
+                        let blocks = false;
+                        if (shooter.stance === 'standing') blocks = (obs.height === 'high');
+                        else if (shooter.stance === 'kneeling') blocks = (obs.height === 'medium' || obs.height === 'high');
+                        else if (shooter.stance === 'prone') blocks = true;
+
+                        if (blocks) { hit = true; break; }
                     }
-
-                    obstacles.push({
-                        x: centerX,
-                        y: centerY,
-                        type: type,
-                        height: obstacleHeight,
-                        size: Math.max(15, Math.min(50, size)),
-                        rotation: rotation
-                    });
                 }
             }
+
+            sightlines.push({ x1: shooter.x, y1: shooter.y, x2: currentX, y2: currentY, shooterId: shooter.id, color: shooter.color });
         }
-    }
+    });
+
+    updateUI(); drawCanvas();
 }
-
-/**
- * Algorithme flood fill pour détecter les régions connectées
- * Retourne un tableau de points {x, y} appartenant à la région
- */
-function floodFill(data, width, height, startX, startY, visited, threshold) {
-    const stack = [{ x: startX, y: startY }];
-    const region = [];
-
-    while (stack.length > 0 && region.length < 10000) {
-        const { x, y } = stack.pop();
-
-        if (x < 0 || x >= width || y < 0 || y >= height) continue;
-
-        const idx = y * width + x;
-        if (visited[idx]) continue;
-
-        const pixelIdx = idx * 4;
-        const r = data[pixelIdx];
-        const g = data[pixelIdx + 1];
-        const b = data[pixelIdx + 2];
-        const brightness = (r + g + b) / 3;
-
-        if (brightness >= threshold) continue;
-
-        visited[idx] = true;
-        region.push({ x, y });
-
-        stack.push({ x: x + 1, y });
-        stack.push({ x: x - 1, y });
-        stack.push({ x, y: y + 1 });
-        stack.push({ x, y: y - 1 });
-    }
-
-    return region;
-}
-
-// Suite dans le prochain message...

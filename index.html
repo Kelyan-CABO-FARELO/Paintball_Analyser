@@ -14,14 +14,15 @@
     <div class="main-grid">
         <!-- PANNEAU DE CONTRÔLE GAUCHE -->
         <div class="controls">
+
             <!-- Section chargement d'image -->
             <div class="panel panel-green">
                 <h3>📁 Terrain</h3>
                 <input type="file" id="imageInput" accept="image/*">
-                <button id="autoDetectBtn" style="margin-top: 10px; padding: 8px; font-size: 12px;" class="btn-success" disabled>
-                    🤖 Détection automatique
+                <button id="drawFieldBtn" class="btn-success" style="margin-top: 10px; padding: 8px; font-size: 12px;">
+                    📏 Tracer les limites (Cliquer-glisser)
                 </button>
-                <p id="detectionStatus"></p>
+                <p id="detectionStatus" style="margin-top: 5px; font-size: 11px; color: #666;"></p>
             </div>
 
             <!-- Section sélection d'obstacles -->
