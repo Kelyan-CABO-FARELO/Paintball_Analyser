@@ -11,8 +11,8 @@ let obstacles = [];
 let shooters = [];
 let sightlines = [];
 
-// NOUVEAU : Variables pour les limites du terrain
-let fieldBounds = null; // Stockera {x, y, w, h}
+// Variables pour les limites du terrain
+let fieldBounds = null;
 let isDrawingField = false;
 let fieldStartPos = null;
 
@@ -51,7 +51,6 @@ const OBSTACLE_CONFIG = {
 // GESTIONNAIRES D'ÉVÉNEMENTS
 // ========================================
 
-// Boutons d'interface
 document.querySelectorAll('.obstacle-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         document.querySelectorAll('.obstacle-btn').forEach(b => b.classList.remove('active'));
@@ -84,7 +83,6 @@ canvas.addEventListener('wheel', (e) => {
     document.getElementById('sizeValue').textContent = obstacleSize;
 });
 
-// Chargement de l'image
 document.getElementById('imageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -93,7 +91,7 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
             const img = new Image();
             img.onload = () => {
                 loadedImage = img;
-                fieldBounds = null; // Reset les limites quand on change d'image
+                fieldBounds = null;
                 document.getElementById('detectionStatus').textContent = 'Image chargée.';
                 drawCanvas();
             };
@@ -103,16 +101,15 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
     }
 });
 
-// NOUVEAU : Bouton pour tracer le terrain
 document.getElementById('drawFieldBtn').addEventListener('click', () => {
     isDrawingField = true;
     fieldStartPos = null;
     document.getElementById('detectionStatus').textContent = 'Tracez un rectangle sur l\'image (cliquer-glisser)';
-    document.getElementById('drawFieldBtn').style.opacity = '0.5'; // Effet visuel
+    document.getElementById('drawFieldBtn').style.opacity = '0.5';
 });
 
 // ========================================
-// INTERFACE UI
+// INTERFACE UI (AVEC CHECKBOXES)
 // ========================================
 
 function updateUI() {
@@ -131,12 +128,26 @@ function updateUI() {
         const div = document.createElement('div');
         div.className = 'shooter-item';
         let icon = s.stance === 'standing' ? '🧍' : s.stance === 'kneeling' ? '🧎' : '🤸';
+
+        // NOUVEAU : Ajout de la case à cocher liée à la fonction toggleShooter
         div.innerHTML = `
-            <span>J${index + 1} ${icon} (${s.team === 'left' ? 'G' : 'D'})</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleShooter(${s.id}, this.checked)" style="cursor: pointer;">
+                <span>J${index + 1} ${icon} (${s.team === 'left' ? 'G' : 'D'})</span>
+            </div>
             <button class="shooter-delete" onclick="removeShooter(${s.id})">X</button>
         `;
         list.appendChild(div);
     });
+}
+
+// NOUVEAU : Fonction pour masquer/afficher les lignes d'un joueur
+window.toggleShooter = function(id, isActive) {
+    const shooter = shooters.find(s => s.id === id);
+    if (shooter) {
+        shooter.active = isActive;
+        drawCanvas(); // Redessine le terrain instantanément
+    }
 }
 
 function removeShooter(id) {
@@ -154,23 +165,18 @@ function getMousePos(e) {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY
-    };
+    return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
 }
 
 canvas.addEventListener('mousedown', (e) => {
     if (!loadedImage) return;
     const pos = getMousePos(e);
 
-    // MODE : Tracer le terrain
     if (isDrawingField) {
         fieldStartPos = pos;
         return;
     }
 
-    // MODE : Ajout/Suppression classique
     if (e.ctrlKey || e.metaKey) {
         let removed = false;
         const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
@@ -183,7 +189,8 @@ canvas.addEventListener('mousedown', (e) => {
     } else if (e.shiftKey) {
         shooters.push({
             id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam,
-            color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length]
+            color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length],
+            active: true // NOUVEAU : Le joueur est actif par défaut
         });
         sightlines = [];
     } else {
@@ -198,50 +205,34 @@ canvas.addEventListener('mousedown', (e) => {
     drawCanvas();
 });
 
-// NOUVEAU : Mouvement de souris (pour visualiser le rectangle en train d'être dessiné)
 canvas.addEventListener('mousemove', (e) => {
     if (isDrawingField && fieldStartPos) {
         const pos = getMousePos(e);
-        drawCanvas(); // Redessine tout
-
-        // Dessine le rectangle temporaire en pointillé
-        ctx.strokeStyle = '#ffff00';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 5]);
+        drawCanvas();
+        ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
         ctx.strokeRect(fieldStartPos.x, fieldStartPos.y, pos.x - fieldStartPos.x, pos.y - fieldStartPos.y);
         ctx.setLineDash([]);
     }
 });
 
-// NOUVEAU : Relâchement du clic (valide les limites du terrain)
 canvas.addEventListener('mouseup', (e) => {
     if (isDrawingField && fieldStartPos) {
         const pos = getMousePos(e);
-
-        // Calcule le rectangle final
         const w = Math.abs(pos.x - fieldStartPos.x);
         const h = Math.abs(pos.y - fieldStartPos.y);
 
-        // Sécurité : éviter un terrain de 2 pixels si l'utilisateur a juste cliqué sans glisser
         if (w > 20 && h > 20) {
-            fieldBounds = {
-                x: Math.min(fieldStartPos.x, pos.x),
-                y: Math.min(fieldStartPos.y, pos.y),
-                w: w,
-                h: h
-            };
+            fieldBounds = { x: Math.min(fieldStartPos.x, pos.x), y: Math.min(fieldStartPos.y, pos.y), w: w, h: h };
             document.getElementById('detectionStatus').textContent = 'Limites définies !';
         } else {
             document.getElementById('detectionStatus').textContent = 'Tracé annulé (trop petit).';
         }
 
-        isDrawingField = false;
-        fieldStartPos = null;
+        isDrawingField = false; fieldStartPos = null;
         document.getElementById('drawFieldBtn').style.opacity = '1';
-        sightlines = []; // Forcer le recalcul si on modifie les bords
+        sightlines = [];
 
-        updateUI();
-        drawCanvas();
+        updateUI(); drawCanvas();
     }
 });
 
@@ -256,17 +247,19 @@ function drawCanvas() {
         ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
     }
 
-    // NOUVEAU : Dessine les bordures du terrain
     if (fieldBounds) {
-        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; // Jaune semi-transparent
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
         ctx.lineWidth = 3;
         ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
     }
 
-    // Lignes de tir
+    // NOUVEAU : On ne dessine la ligne que si le joueur est actif (coché)
     sightlines.forEach(line => {
-        ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
-        ctx.strokeStyle = line.color; ctx.lineWidth = 1.5; ctx.stroke();
+        const shooter = shooters.find(s => s.id === line.shooterId);
+        if (shooter && shooter.active) {
+            ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
+            ctx.strokeStyle = line.color; ctx.lineWidth = 1.5; ctx.stroke();
+        }
     });
 
     // Obstacles
@@ -279,10 +272,14 @@ function drawCanvas() {
         ctx.fill(); ctx.stroke(); ctx.restore();
     });
 
-    // Tireurs
+    // Tireurs (On ajoute de la transparence au point si le joueur est décoché)
     shooters.forEach((s, index) => {
         ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = s.color.replace('0.3', '1'); ctx.fill();
+
+        // Si le joueur est inactif, on le rend légèrement transparent pour qu'on sache qu'il est "éteint"
+        ctx.fillStyle = s.active ? s.color.replace('0.3', '1') : s.color;
+
+        ctx.fill();
         ctx.strokeStyle = s.team === 'left' ? '#000' : '#FFF'; ctx.lineWidth = 2; ctx.stroke();
         ctx.fillStyle = s.team === 'left' ? '#FFF' : '#000';
         ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -306,7 +303,6 @@ document.getElementById('resetBtn').addEventListener('click', () => {
 function calculateSightlines() {
     sightlines = [];
 
-    // NOUVEAU : Définition des limites du calcul (le terrain OU le canvas entier)
     const minX = fieldBounds ? fieldBounds.x : 0;
     const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;
     const minY = fieldBounds ? fieldBounds.y : 0;
@@ -320,7 +316,6 @@ function calculateSightlines() {
             const step = 4;
             let hit = false;
 
-            // On vérifie que la ligne de tir est bien à l'intérieur des bordures fixées !
             while (!hit && currentX >= minX && currentX <= maxX && currentY >= minY && currentY <= maxY) {
                 currentX += Math.cos(rad) * step;
                 currentY += Math.sin(rad) * step;
