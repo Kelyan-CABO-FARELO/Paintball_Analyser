@@ -30,11 +30,11 @@
                 <h3>🛡️ Type d'obstacle</h3>
                 <div class="obstacle-grid">
                     <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
-                    <div class="obstacle-btn" data-type="dorito" data-height="medium">🔺 Dorito<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Can<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="dorito" data-height="high">🔺 Voile<span class="height-badge height-high">HAUT</span></div>
+                    <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Cannette<span class="height-badge height-medium">MOY</span></div>
                     <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
                     <div class="obstacle-btn" data-type="brick" data-height="medium">📺🧱 M/Télé/Brique<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="x" data-height="medium">❌ X-Bunker<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="x" data-height="medium">❌ Star<span class="height-badge height-medium">MOY</span></div>
                     <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
                     <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
                 </div>
@@ -89,6 +89,13 @@
                 </ul>
             </div>
 
+            <div style="margin-bottom: 15px; padding: 10px; background: #ffebee; border: 2px solid #ef5350; border-radius: 8px; font-size: 13px;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; color: #c62828;">
+                    <input type="checkbox" id="filterCenterCheckbox">
+                    🎯 Ne montrer que les tirs qui passent le centre
+                </label>
+            </div>
+
             <!-- Boutons d'action -->
             <button id="calculateBtn" class="btn-primary" disabled>🎯 Calculer lignes de tir</button>
 <!--            <button id="teamCoverageBtn" class="btn-success" disabled>👥 Couverture d'équipe</button>-->
@@ -104,8 +111,8 @@
                 </div>
                 <div class="color-legend" style="margin-top: 15px;">
                     <div class="legend-item"><div class="legend-color height-low"></div><span>BAS: Snake, Cake, Chavrou</span></div>
-                    <div class="legend-item"><div class="legend-color height-medium"></div><span>MOYEN: Dorito, Can, X, M/Télé, Brique</span></div>
-                    <div class="legend-item"><div class="legend-color height-high"></div><span>HAUT: Temple, Totem</span></div>
+                    <div class="legend-item"><div class="legend-color height-medium"></div><span>MOYEN: Cannette, Star, M/Télé, Brique</span></div>
+                    <div class="legend-item"><div class="legend-color height-high"></div><span>HAUT: Temple, Totem, Voile</span></div>
                 </div>
             </div>
         </div>

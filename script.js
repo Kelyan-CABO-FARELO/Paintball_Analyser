@@ -24,6 +24,7 @@ let currentRotation = 0;
 
 let shooterStance = 'standing';
 let shooterTeam = 'left';
+let filterUsefulLines = false; // NOUVEAU : État du filtre du centre
 
 // ========================================
 // CONFIGURATION DES COULEURS ET FORMES RÉELLES
@@ -36,7 +37,7 @@ const SHOOTER_COLORS = [
 
 const OBSTACLE_CONFIG = {
     snake:  { height: 'low',    color: 'rgba(101, 67, 33, 0.7)',  shape: 'rect',     w: 4,   h: 0.8 },
-    dorito: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'triangle', w: 2,   h: 2   },
+    dorito: { height: 'high', color: 'rgba(139, 69, 19, 0.7)',  shape: 'triangle', w: 2,   h: 2   },
     can:    { height: 'medium', color: 'rgba(160, 82, 45, 0.7)',  shape: 'circle',   w: 1.5, h: 1.5 },
     brick:  { height: 'medium', color: 'rgba(178, 34, 34, 0.7)',  shape: 'rect',     w: 2,   h: 1   },
     temple: { height: 'high',   color: 'rgba(120, 60, 30, 0.7)',  shape: 'rect',     w: 3,   h: 1.5   },
@@ -115,6 +116,15 @@ document.getElementById('drawFieldBtn').addEventListener('click', () => {
     document.getElementById('detectionStatus').textContent = 'Tracez un rectangle sur l\'image (cliquer-glisser)';
     document.getElementById('drawFieldBtn').style.opacity = '0.5';
 });
+
+// NOUVEAU : Écouteur pour la case à cocher du filtre
+const filterCb = document.getElementById('filterCenterCheckbox');
+if (filterCb) {
+    filterCb.addEventListener('change', (e) => {
+        filterUsefulLines = e.target.checked;
+        if (shooters.length > 0) calculateSightlines(); // Recalculer direct si on coche
+    });
+}
 
 // ========================================
 // INTERFACE UI
@@ -252,9 +262,20 @@ function drawCanvas() {
     }
 
     if (fieldBounds) {
+        // Tracé du rectangle jaune du terrain
         ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
         ctx.lineWidth = 3;
         ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
+
+        // NOUVEAU : Dessiner la Ligne du 50 (milieu)
+        const centerX = fieldBounds.x + fieldBounds.w / 2;
+        ctx.beginPath();
+        ctx.moveTo(centerX, fieldBounds.y);
+        ctx.lineTo(centerX, fieldBounds.y + fieldBounds.h);
+        ctx.setLineDash([10, 10]); // Ligne pointillée
+        ctx.strokeStyle = 'rgba(239, 83, 80, 0.6)'; // Couleur rouge
+        ctx.stroke();
+        ctx.setLineDash([]); // On réinitialise pour la suite
     }
 
     sightlines.forEach(line => {
@@ -400,7 +421,22 @@ function calculateSightlines() {
                     }
                 }
             }
-            sightlines.push({ x1: shooter.x, y1: shooter.y, x2: currentX, y2: currentY, shooterId: shooter.id, color: shooter.color });
+
+            // NOUVEAU : On filtre la ligne selon le côté du terrain
+            let isUseful = true;
+            if (filterUsefulLines) {
+                const centerX = fieldBounds ? fieldBounds.x + fieldBounds.w / 2 : canvas.width / 2;
+
+                // Si équipe GAUCHE et que le tir n'atteint pas le centre
+                if (shooter.team === 'left' && currentX < centerX) isUseful = false;
+
+                // Si équipe DROITE et que le tir n'atteint pas le centre
+                if (shooter.team === 'right' && currentX > centerX) isUseful = false;
+            }
+
+            if (isUseful) {
+                sightlines.push({ x1: shooter.x, y1: shooter.y, x2: currentX, y2: currentY, shooterId: shooter.id, color: shooter.color });
+            }
         }
     });
 
