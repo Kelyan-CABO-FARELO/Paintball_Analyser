@@ -20,14 +20,14 @@ let fieldStartPos = null;
 let selectedObstacleType = 'snake';
 let selectedObstacleHeight = 'low';
 let obstacleSize = 25;
+let currentRotation = 0;
 
 let shooterStance = 'standing';
 let shooterTeam = 'left';
 
 // ========================================
-// CONFIGURATION DES COULEURS ET OBSTACLES
+// CONFIGURATION DES COULEURS ET FORMES RÉELLES
 // ========================================
-
 const SHOOTER_COLORS = [
     'rgba(255, 0, 0, 0.3)', 'rgba(0, 0, 255, 0.3)', 'rgba(255, 165, 0, 0.3)',
     'rgba(148, 0, 211, 0.3)', 'rgba(0, 255, 255, 0.3)', 'rgba(255, 20, 147, 0.3)',
@@ -35,16 +35,20 @@ const SHOOTER_COLORS = [
 ];
 
 const OBSTACLE_CONFIG = {
-    snake: { height: 'low', color: 'rgba(101, 67, 33, 0.7)' },
-    dorito: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },
-    can: { height: 'medium', color: 'rgba(160, 82, 45, 0.7)' },
-    brick: { height: 'medium', color: 'rgba(178, 34, 34, 0.7)' },
-    temple: { height: 'high', color: 'rgba(120, 60, 30, 0.7)' },
-    m: { height: 'medium', color: 'rgba(70, 70, 70, 0.7)' },
-    x: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)' },
-    cake: { height: 'low', color: 'rgba(139, 90, 43, 0.7)' },
-    goat: { height: 'low', color: 'rgba(245, 222, 179, 0.7)' },
-    totem: { height: 'high', color: 'rgba(105, 105, 105, 0.7)' }
+    snake:  { height: 'low',    color: 'rgba(101, 67, 33, 0.7)',  shape: 'rect',     w: 4,   h: 0.8 },
+    dorito: { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'triangle', w: 2,   h: 2   },
+    can:    { height: 'medium', color: 'rgba(160, 82, 45, 0.7)',  shape: 'circle',   w: 1.5, h: 1.5 },
+    brick:  { height: 'medium', color: 'rgba(178, 34, 34, 0.7)',  shape: 'rect',     w: 2,   h: 1   },
+    temple: { height: 'high',   color: 'rgba(120, 60, 30, 0.7)',  shape: 'rect',     w: 3,   h: 1.5   },
+    goat:   { height: 'low',    color: 'rgba(245, 222, 179, 0.7)',shape: 'rect',     w: 1.5, h: 1.5 },
+    totem:  { height: 'high',   color: 'rgba(105, 105, 105, 0.7)',shape: 'circle',   w: 1,   h: 1   },
+    x:      { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'polygon', w: 2, h: 2,
+        vertices: [
+            {x: -1, y: -1}, {x: -0.4, y: -1}, {x: 0, y: -0.3}, {x: 0.4, y: -1}, {x: 1, y: -1},
+            {x: 0.3, y: 0}, {x: 1, y: 1}, {x: 0.4, y: 1}, {x: 0, y: 0.3}, {x: -0.4, y: 1},
+            {x: -1, y: 1}, {x: -0.3, y: 0}
+        ]
+    }
 };
 
 // ========================================
@@ -65,7 +69,6 @@ document.querySelectorAll('.stance-btn').forEach(btn => {
         const parent = btn.parentElement;
         parent.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-
         if (btn.dataset.stance) shooterStance = btn.dataset.stance;
         if (btn.dataset.team) shooterTeam = btn.dataset.team;
     });
@@ -73,14 +76,19 @@ document.querySelectorAll('.stance-btn').forEach(btn => {
 
 document.getElementById('sizeSlider').addEventListener('input', (e) => {
     obstacleSize = parseInt(e.target.value);
-    document.getElementById('sizeValue').textContent = obstacleSize;
+    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`;
 });
 
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
-    obstacleSize = Math.max(15, Math.min(50, obstacleSize + (e.deltaY > 0 ? -2 : 2)));
-    document.getElementById('sizeSlider').value = obstacleSize;
-    document.getElementById('sizeValue').textContent = obstacleSize;
+    if (e.shiftKey) {
+        currentRotation = (currentRotation + (e.deltaY > 0 ? 15 : -15)) % 360;
+        if (currentRotation < 0) currentRotation += 360;
+    } else {
+        obstacleSize = Math.max(15, Math.min(50, obstacleSize + (e.deltaY > 0 ? -2 : 2)));
+        document.getElementById('sizeSlider').value = obstacleSize;
+    }
+    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`;
 });
 
 document.getElementById('imageInput').addEventListener('change', (e) => {
@@ -109,7 +117,7 @@ document.getElementById('drawFieldBtn').addEventListener('click', () => {
 });
 
 // ========================================
-// INTERFACE UI (AVEC CHECKBOXES)
+// INTERFACE UI
 // ========================================
 
 function updateUI() {
@@ -120,7 +128,6 @@ function updateUI() {
 
     const hasShooters = shooters.length > 0;
     document.getElementById('calculateBtn').disabled = !hasShooters;
-    document.getElementById('teamCoverageBtn').disabled = !hasShooters;
 
     const list = document.getElementById('shooterList');
     list.innerHTML = '';
@@ -129,7 +136,6 @@ function updateUI() {
         div.className = 'shooter-item';
         let icon = s.stance === 'standing' ? '🧍' : s.stance === 'kneeling' ? '🧎' : '🤸';
 
-        // NOUVEAU : Ajout de la case à cocher liée à la fonction toggleShooter
         div.innerHTML = `
             <div style="display: flex; align-items: center; gap: 8px;">
                 <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleShooter(${s.id}, this.checked)" style="cursor: pointer;">
@@ -141,12 +147,11 @@ function updateUI() {
     });
 }
 
-// NOUVEAU : Fonction pour masquer/afficher les lignes d'un joueur
 window.toggleShooter = function(id, isActive) {
     const shooter = shooters.find(s => s.id === id);
     if (shooter) {
         shooter.active = isActive;
-        drawCanvas(); // Redessine le terrain instantanément
+        drawCanvas();
     }
 }
 
@@ -190,13 +195,13 @@ canvas.addEventListener('mousedown', (e) => {
         shooters.push({
             id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam,
             color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length],
-            active: true // NOUVEAU : Le joueur est actif par défaut
+            active: true
         });
         sightlines = [];
     } else {
         obstacles.push({
             x: pos.x, y: pos.y, type: selectedObstacleType, height: selectedObstacleHeight,
-            size: obstacleSize, rotation: 0
+            size: obstacleSize, rotation: currentRotation
         });
         sightlines = [];
     }
@@ -231,13 +236,12 @@ canvas.addEventListener('mouseup', (e) => {
         isDrawingField = false; fieldStartPos = null;
         document.getElementById('drawFieldBtn').style.opacity = '1';
         sightlines = [];
-
         updateUI(); drawCanvas();
     }
 });
 
 // ========================================
-// MOTEUR DE RENDU (DESSIN)
+// MOTEUR DE RENDU (DESSIN DES FORMES)
 // ========================================
 
 function drawCanvas() {
@@ -253,7 +257,6 @@ function drawCanvas() {
         ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
     }
 
-    // NOUVEAU : On ne dessine la ligne que si le joueur est actif (coché)
     sightlines.forEach(line => {
         const shooter = shooters.find(s => s.id === line.shooterId);
         if (shooter && shooter.active) {
@@ -262,23 +265,49 @@ function drawCanvas() {
         }
     });
 
-    // Obstacles
     obstacles.forEach(obs => {
         const config = OBSTACLE_CONFIG[obs.type];
-        ctx.save(); ctx.translate(obs.x, obs.y); ctx.rotate(obs.rotation * Math.PI / 180);
-        ctx.fillStyle = config ? config.color : 'rgba(100,100,100,0.5)';
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(0, 0, obs.size, 0, Math.PI * 2);
-        ctx.fill(); ctx.stroke(); ctx.restore();
+        if (!config) return;
+
+        const w = obs.size * config.w;
+        const h = obs.size * config.h;
+
+        ctx.save();
+        ctx.translate(obs.x, obs.y);
+        ctx.rotate(obs.rotation * Math.PI / 180);
+
+        ctx.fillStyle = config.color;
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        if (config.shape === 'rect') {
+            ctx.rect(-w/2, -h/2, w, h);
+        } else if (config.shape === 'circle') {
+            ctx.arc(0, 0, w/2, 0, Math.PI * 2);
+        } else if (config.shape === 'triangle') {
+            ctx.moveTo(0, -h/2);
+            ctx.lineTo(w/2, h/2);
+            ctx.lineTo(-w/2, h/2);
+            ctx.closePath();
+        } else if (config.shape === 'half-circle') {
+            ctx.arc(0, 0, w/2, 0, Math.PI);
+            ctx.closePath();
+        } else if (config.shape === 'polygon' && config.vertices) {
+            ctx.moveTo(config.vertices[0].x * w/2, config.vertices[0].y * h/2);
+            for (let i = 1; i < config.vertices.length; i++) {
+                ctx.lineTo(config.vertices[i].x * w/2, config.vertices[i].y * h/2);
+            }
+            ctx.closePath();
+        }
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
     });
 
-    // Tireurs (On ajoute de la transparence au point si le joueur est décoché)
     shooters.forEach((s, index) => {
         ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
-
-        // Si le joueur est inactif, on le rend légèrement transparent pour qu'on sache qu'il est "éteint"
         ctx.fillStyle = s.active ? s.color.replace('0.3', '1') : s.color;
-
         ctx.fill();
         ctx.strokeStyle = s.team === 'left' ? '#000' : '#FFF'; ctx.lineWidth = 2; ctx.stroke();
         ctx.fillStyle = s.team === 'left' ? '#FFF' : '#000';
@@ -288,7 +317,7 @@ function drawCanvas() {
 }
 
 // ========================================
-// ALGORITHME DE RAYCASTING (LIGNES DE TIR)
+// ALGORITHME DE RAYCASTING (LIGNES ET COLLISION)
 // ========================================
 
 document.getElementById('calculateBtn').addEventListener('click', () => { calculateSightlines(); });
@@ -321,8 +350,47 @@ function calculateSightlines() {
                 currentY += Math.sin(rad) * step;
 
                 for (let obs of obstacles) {
-                    const distance = Math.sqrt((currentX - obs.x)**2 + (currentY - obs.y)**2);
-                    if (distance <= obs.size) {
+                    const config = OBSTACLE_CONFIG[obs.type];
+                    const w = obs.size * config.w;
+                    const h = obs.size * config.h;
+                    let collision = false;
+
+                    if (config.shape === 'circle') {
+                        const dist = Math.sqrt((currentX - obs.x)**2 + (currentY - obs.y)**2);
+                        collision = (dist <= w/2);
+                    } else {
+                        const dx = currentX - obs.x;
+                        const dy = currentY - obs.y;
+                        const angleRad = -obs.rotation * Math.PI / 180;
+                        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
+                        const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+
+                        if (config.shape === 'rect') {
+                            collision = (Math.abs(localX) <= w/2 && Math.abs(localY) <= h/2);
+                        } else if (config.shape === 'triangle') {
+                            if (localY >= -h/2 && localY <= h/2) {
+                                const allowedWidth = (w/2) * ((localY + h/2) / h);
+                                collision = Math.abs(localX) <= allowedWidth;
+                            }
+                        } else if (config.shape === 'half-circle') {
+                            const inCircle = Math.sqrt(localX*localX + localY*localY) <= w/2;
+                            collision = (inCircle && localY >= 0);
+                        } else if (config.shape === 'polygon' && config.vertices) {
+                            const normX = localX / (w/2);
+                            const normY = localY / (h/2);
+                            let inside = false;
+                            for (let i = 0, j = config.vertices.length - 1; i < config.vertices.length; j = i++) {
+                                const xi = config.vertices[i].x, yi = config.vertices[i].y;
+                                const xj = config.vertices[j].x, yj = config.vertices[j].y;
+                                const intersect = ((yi > normY) !== (yj > normY))
+                                    && (normX < (xj - xi) * (normY - yi) / (yj - yi) + xi);
+                                if (intersect) inside = !inside;
+                            }
+                            collision = inside;
+                        }
+                    }
+
+                    if (collision) {
                         let blocks = false;
                         if (shooter.stance === 'standing') blocks = (obs.height === 'high');
                         else if (shooter.stance === 'kneeling') blocks = (obs.height === 'medium' || obs.height === 'high');
@@ -332,7 +400,6 @@ function calculateSightlines() {
                     }
                 }
             }
-
             sightlines.push({ x1: shooter.x, y1: shooter.y, x2: currentX, y2: currentY, shooterId: shooter.id, color: shooter.color });
         }
     });

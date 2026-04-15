@@ -32,11 +32,9 @@
                     <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
                     <div class="obstacle-btn" data-type="dorito" data-height="medium">🔺 Dorito<span class="height-badge height-medium">MOY</span></div>
                     <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Can<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="brick" data-height="medium">🧱 Brique<span class="height-badge height-medium">MOY</span></div>
                     <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
-                    <div class="obstacle-btn" data-type="m" data-height="medium">📺 M/Télé<span class="height-badge height-medium">MOY</span></div>
+                    <div class="obstacle-btn" data-type="brick" data-height="medium">📺🧱 M/Télé/Brique<span class="height-badge height-medium">MOY</span></div>
                     <div class="obstacle-btn" data-type="x" data-height="medium">❌ X-Bunker<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="cake" data-height="low">🍰 Cake<span class="height-badge height-low">BAS</span></div>
                     <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
                     <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
                 </div>
@@ -83,16 +81,17 @@
             <div class="panel panel-blue">
                 <h3>📖 Instructions</h3>
                 <ul>
-                    <li>• 🤖 Détection auto : zone + obstacles</li>
-                    <li>• Shift + Clic : ajouter tireur</li>
-                    <li>• Ctrl + Clic : supprimer</li>
-                    <li>• Les obstacles sont orientés automatiquement</li>
+                    <li>• Clic : Ajouter un obstacle</li>
+                    <li>• Shift + Molette : Augmenter/Diminuer l'angle d'orientation</li>
+                    <li>• Molette : Augmenter/Diminuer la taille des obstacles</li>
+                    <li>• Shift + Clic : Ajouter joueur</li>
+                    <li>• Ctrl + Clic : Supprimer un joueur/un obstacle</li>
                 </ul>
             </div>
 
             <!-- Boutons d'action -->
             <button id="calculateBtn" class="btn-primary" disabled>🎯 Calculer lignes de tir</button>
-            <button id="teamCoverageBtn" class="btn-success" disabled>👥 Couverture d'équipe</button>
+<!--            <button id="teamCoverageBtn" class="btn-success" disabled>👥 Couverture d'équipe</button>-->
             <button id="resetBtn" class="btn-danger">🗑️ Tout réinitialiser</button>
 
             <!-- Statistiques -->
