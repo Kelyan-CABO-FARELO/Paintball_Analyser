@@ -281,8 +281,25 @@ function drawCanvas() {
     sightlines.forEach(line => {
         const shooter = shooters.find(s => s.id === line.shooterId);
         if (shooter && shooter.active) {
-            ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
-            ctx.strokeStyle = line.color; ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.beginPath(); 
+            ctx.moveTo(line.x1, line.y1); 
+            ctx.lineTo(line.x2, line.y2);
+            
+            // --- NOUVELLE LOGIQUE VISUELLE ---
+            if (line.isBlind) {
+                ctx.setLineDash([5, 5]); // Crée l'effet pointillé
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; // Noir légèrement transparent pour le blind
+                ctx.lineWidth = 2; // Un poil plus épais pour bien ressortir
+            } else {
+                ctx.setLineDash([]); // Ligne continue
+                ctx.strokeStyle = line.color; // Reste à la couleur du joueur pour le tendu
+                ctx.lineWidth = 1.5; 
+            }
+            
+            ctx.stroke();
+            
+            // On réinitialise les pointillés pour ne pas affecter le reste du dessin
+            ctx.setLineDash([]); 
         }
     });
 
