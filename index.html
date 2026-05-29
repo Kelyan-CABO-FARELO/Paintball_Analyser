@@ -3,121 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyseur Tactique Paintball Sportif</title>
+    <title>Paintball Analyser</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
-<div class="container">
-    <h1>🎯 Analyseur Tactique - Paintball Sportif</h1>
-    <p class="subtitle">Analyse des lignes de tir avec gestion de hauteur des obstacles</p>
-
-    <div class="main-grid">
-        <!-- PANNEAU DE CONTRÔLE GAUCHE -->
-        <div class="controls">
-
-            <!-- Section chargement d'image -->
-            <div class="panel panel-green">
-                <h3>📁 Terrain</h3>
-                <input type="file" id="imageInput" accept="image/*">
-                <button id="drawFieldBtn" class="btn-success" style="margin-top: 10px; padding: 8px; font-size: 12px;">
-                    📏 Tracer les limites (Cliquer-glisser)
-                </button>
-                <p id="detectionStatus" style="margin-top: 5px; font-size: 11px; color: #666;"></p>
+    <div id="app">
+        <header class="topbar">
+            <div class="logo">🦑 LOS CALAMARÈS <span class="badge">PRO</span></div>
+            <div class="stepper">
+                <div class="step active" id="indicator-step1"><span class="step-num">1</span> Paramètres</div>
+                <div class="step" id="indicator-step2"><span class="step-num">2</span> Modules</div>
+                <div class="step" id="indicator-step3"><span class="step-num">3</span> Déploiement</div>
+                <div class="step" id="indicator-step4"><span class="step-num">4</span> Validation</div>
             </div>
+            <button id="resetBtn" class="btn-danger-outline">🗑️ Reset Total</button>
+        </header>
 
-            <!-- Section sélection d'obstacles -->
-            <div class="panel panel-purple">
-                <h3>🛡️ Type d'obstacle</h3>
-                <div class="obstacle-grid">
-                    <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
-                    <div class="obstacle-btn" data-type="dorito" data-height="high">🔺 Voile<span class="height-badge height-high">HAUT</span></div>
-                    <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Cannette<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
-                    <div class="obstacle-btn" data-type="brick" data-height="medium">📺🧱 M/Télé/Brique<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="x" data-height="medium">❌ Star<span class="height-badge height-medium">MOY</span></div>
-                    <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
-                    <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
+        <main class="main-content">
+            <aside class="sidebar">
+
+                <div class="step-panel" id="panel-step1">
+                    <h3>⚙️ 1. Mode & Terrain</h3>
+                    <p class="help-text">Choisis ton mode de planification avant de commencer.</p>
+                    
+                    <div class="mode-switch" style="margin-bottom: 20px;">
+                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')">🧮 Live (Rapide)</div>
+                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')">🗺️ Stratégie Pro</div>
+                    </div>
+
+                    <input type="file" id="imageInput" accept="image/*" class="file-input">
+                    <button id="drawFieldBtn" class="btn btn-secondary">📏 Tracer les limites du terrain</button>
+                    <p id="detectionStatus" class="status-text">En attente d'image...</p>
+                    
+                    <div class="step-actions">
+                        <button class="btn btn-primary" onclick="goToStep(2)">Construire le terrain ➔</button>
+                    </div>
                 </div>
-                <p style="margin-top: 10px; font-size: 12px; color: #666;">
-                    Taille: <input type="range" id="sizeSlider" min="15" max="50" value="25" style="width: 100%">
-                    <span id="sizeValue">25</span>px
-                </p>
-            </div>
 
-            <!-- Section position du tireur -->
-            <div class="panel panel-blue">
-                <h3>🏃 Position du tireur</h3>
-                <div class="stance-selector">
-                    <div class="stance-btn active" data-stance="standing">🧍 Debout</div>
-                    <div class="stance-btn" data-stance="kneeling">🧎 Genou</div>
-                    <div class="stance-btn" data-stance="prone">🤸 Couché</div>
+                <div class="step-panel" id="panel-step2" style="display: none;">
+                    <h3>🚧 2. Construction</h3>
+                    <p class="help-text">Clique pour poser les modules. <b>Ctrl+Clic</b> pour supprimer.</p>
+                    
+                    <div class="obstacle-grid">
+                        <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
+                        <div class="obstacle-btn" data-type="dorito" data-height="high">🔺 Voile<span class="height-badge height-high">HAUT</span></div>
+                        <div class="obstacle-btn" data-type="can" data-height="medium">🥫 Cannette<span class="height-badge height-medium">MOY</span></div>
+                        <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
+                        <div class="obstacle-btn" data-type="brick" data-height="medium">🧱 M/Brique<span class="height-badge height-medium">MOY</span></div>
+                        <div class="obstacle-btn" data-type="x" data-height="medium">❌ Star<span class="height-badge height-medium">MOY</span></div>
+                        <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
+                        <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
+                    </div>
+
+                    <div class="slider-group">
+                        <label>Dimensions : <span id="sizeValue" style="color:#38bdf8; font-weight:bold;">Taille: 25 | Angle: 0°</span></label>
+                        <input type="range" id="sizeSlider" min="15" max="50" value="25">
+                        <p class="help-text">Molette = Taille | Shift+Molette = Angle</p>
+                    </div>
+
+                    <div class="step-actions">
+                        <button class="btn btn-outline" onclick="goToStep(1)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(3)">Valider Modules 🔒</button>
+                    </div>
                 </div>
-                <p style="margin-top: 10px; font-size: 11px; color: #666;">
-                    🧍 Debout: tire par-dessus BAS et MOY<br>
-                    🧎 Genou: tire par-dessus BAS uniquement<br>
-                    🤸 Couché: bloqué par tous obstacles<br>
-                    🌈 Les tirs en cloche (blinds) sont calculés et dessinés automatiquement (en pointillés).
-                </p>
-            </div>
 
-            <!-- Section équipe -->
-            <div class="panel panel-purple">
-                <h3>⚔️ Équipe du tireur</h3>
-                <div class="stance-selector">
-                    <div class="stance-btn active" data-team="left">⬅️ Équipe Gauche</div>
-                    <div class="stance-btn" data-team="right">➡️ Équipe Droite</div>
+                <div class="step-panel" id="panel-step3" style="display: none;">
+                    <h3 id="step3-title">👥 3. Déploiement</h3>
+                    <p class="help-text" id="step3-desc">Place tes joueurs. L'analyse est en direct.</p>
+
+                    <div class="tool-group">
+                        <label>Posture du tireur</label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" data-stance="standing">🧍 Debout</div>
+                            <div class="stance-btn" data-stance="kneeling">🧎 Genou</div>
+                            <div class="stance-btn" data-stance="prone">🤸 Couché</div>
+                        </div>
+                    </div>
+
+                    <div id="strategy-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#38bdf8;">Planification : Joueur <span id="currentPlayerNum">1</span></label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" id="btn-tool-place" onclick="setTool('place')">🧍 Placer</div>
+                            <div class="stance-btn" id="btn-tool-select" onclick="setTool('select')">🖱️ Lignes</div>
+                            <div class="stance-btn" id="btn-tool-arrow" onclick="setTool('arrow')">↗️ Course</div>
+                        </div>
+                    </div>
+
+                    <div class="shooter-list" id="shooterList"></div>
+
+                    <div class="step-actions" id="actions-calc">
+                        <button class="btn btn-outline" onclick="goToStep(2)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(4)">Terminer ➔</button>
+                    </div>
+                    <div class="step-actions" id="actions-strat" style="display: none;">
+                        <button class="btn btn-success" onclick="nextStrategyPlayer()">Valider Joueur <span id="btnNextPlayerNum">1</span> ➔</button>
+                    </div>
                 </div>
-                <p style="margin-top: 10px; font-size: 11px; color: #666;">
-                    Définit le côté ennemi (direction de tir principale)
-                </p>
-            </div>
 
-            <!-- Liste des tireurs -->
-            <div class="panel panel-blue">
-                <h3>👥 Tireurs (<span id="shooterCount">0</span>)</h3>
-                <div class="shooter-list" id="shooterList"></div>
-            </div>
+                <div class="step-panel" id="panel-step4" style="display: none;">
+                    <h3>✅ 4. Plan de Jeu</h3>
+                    
+                    <div id="recap-calc">
+                        <p class="help-text">Aperçu en direct validé.</p>
+                        <div class="stats-box">
+                            <p>Lignes calculées : <strong id="lineCount">0</strong></p>
+                        </div>
+                    </div>
 
-            <!-- Instructions -->
-            <div class="panel panel-blue">
-                <h3>📖 Instructions</h3>
-                <ul>
-                    <li>• Clic : Ajouter un obstacle</li>
-                    <li>• Shift + Molette : Augmenter/Diminuer l'angle d'orientation</li>
-                    <li>• Molette : Augmenter/Diminuer la taille des obstacles</li>
-                    <li>• Shift + Clic : Ajouter joueur</li>
-                    <li>• Ctrl + Clic : Supprimer un joueur/un obstacle</li>
-                </ul>
-            </div>
+                    <div id="recap-strat" style="display: none;">
+                        <p class="help-text">Playbook de l'équipe prêt à l'emploi.</p>
+                        
+                        <div class="chat-placeholder">
+                            <div class="chat-header">💬 Discussion d'Équipe</div>
+                            <div class="chat-body">
+                                <em>La messagerie en direct arrivera dans la prochaine mise à jour BDD.</em>
+                            </div>
+                            <input type="text" placeholder="Écrire un message..." disabled style="width:100%; padding:8px; margin-top:10px; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#64748b;">
+                        </div>
+                    </div>
 
-            <!-- Boutons d'action -->
-            <button id="calculateBtn" class="btn-primary" disabled>🎯 Calculer lignes de tir</button>
-<!--            <button id="teamCoverageBtn" class="btn-success" disabled>👥 Couverture d'équipe</button>-->
-            <button id="resetBtn" class="btn-danger">🗑️ Tout réinitialiser</button>
-
-            <!-- Statistiques -->
-            <div class="panel panel-orange">
-                <h3>📊 Statistiques</h3>
-                <div class="stats">
-                    <strong>Obstacles :</strong> <span id="obstacleCount">0</span><br>
-                    <strong>Tireurs :</strong> <span id="shooterCountStats">0</span><br>
-                    <strong>Lignes actives :</strong> <span id="lineCount">0</span>
+                    <div class="step-actions" style="margin-top: 20px; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="exportPlan()">📸 Exporter le Plan (Image)</button>
+                        <button class="btn btn-outline" onclick="goToStep(3)">⬅️ Modifier la tactique</button>
+                    </div>
                 </div>
-                <div class="color-legend" style="margin-top: 15px;">
-                    <div class="legend-item"><div class="legend-color height-low"></div><span>BAS: Snake, Chavrou</span></div>
-                    <div class="legend-item"><div class="legend-color height-medium"></div><span>MOYEN: Cannette, Star, M/Télé, Brique</span></div>
-                    <div class="legend-item"><div class="legend-color height-high"></div><span>HAUT: Temple, Totem, Voile</span></div>
-                </div>
-            </div>
-        </div>
 
-        <!-- ZONE DE CANVAS (TERRAIN) -->
-        <div class="canvas-container">
-            <canvas id="canvas" width="1000" height="700"></canvas>
-        </div>
+            </aside>
+
+            <section class="canvas-wrapper">
+                <canvas id="canvas" width="1000" height="700"></canvas>
+            </section>
+        </main>
     </div>
-</div>
 
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

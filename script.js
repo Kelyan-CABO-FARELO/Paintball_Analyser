@@ -1,40 +1,40 @@
 // ========================================
-// VARIABLES GLOBALES ET CONFIGURATION
+// VARIABLES GLOBALES
 // ========================================
-
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-// Variables d'état de l'application
-let loadedImage = null;
-let obstacles = [];
-let shooters = [];
-let sightlines = [];
+let currentStep = 1; 
 
-// Variables pour les limites du terrain
+let loadedImage = null;
 let fieldBounds = null;
 let isDrawingField = false;
 let fieldStartPos = null;
 
-// Variables de sélection pour l'ajout
+let obstacles = [];
+let shooters = [];
+let previewLines = []; 
+let lockedLines = [];  
+let arrows = [];       
+
+// Variables de mode
+let isStrategyMode = false; 
+let currentStrategyPlayer = 1; 
+let currentStrategyTool = 'place'; 
+
+let isDrawingArrow = false;
+let arrowStartPos = null;
+let arrowCurrentPos = null;
+
 let selectedObstacleType = 'snake';
 let selectedObstacleHeight = 'low';
 let obstacleSize = 25;
 let currentRotation = 0;
 
 let shooterStance = 'standing';
-let shooterTeam = 'left';
-let filterUsefulLines = false; // NOUVEAU : État du filtre du centre
+let shooterTeam = 'left'; 
 
-// ========================================
-// CONFIGURATION DES COULEURS ET FORMES RÉELLES
-// ========================================
-const SHOOTER_COLORS = [
-    'rgba(255, 0, 0, 0.3)', 'rgba(0, 0, 255, 0.3)', 'rgba(255, 165, 0, 0.3)',
-    'rgba(148, 0, 211, 0.3)', 'rgba(0, 255, 255, 0.3)', 'rgba(255, 20, 147, 0.3)',
-    'rgba(0, 255, 0, 0.3)', 'rgba(255, 255, 0, 0.3)'
-];
-
+const SHOOTER_COLORS = ['rgba(255,0,0,0.3)', 'rgba(0,0,255,0.3)', 'rgba(255,165,0,0.3)', 'rgba(148,0,211,0.3)', 'rgba(0,255,255,0.3)', 'rgba(255,20,147,0.3)', 'rgba(0,255,0,0.3)', 'rgba(255,255,0,0.3)'];
 const OBSTACLE_CONFIG = {
     snake:  { height: 'low',    color: 'rgba(101, 67, 33, 0.7)',  shape: 'rect',     w: 4,   h: 0.8 },
     dorito: { height: 'high', color: 'rgba(139, 69, 19, 0.7)',  shape: 'triangle', w: 2,   h: 2   },
@@ -43,54 +43,88 @@ const OBSTACLE_CONFIG = {
     temple: { height: 'high',   color: 'rgba(120, 60, 30, 0.7)',  shape: 'rect',     w: 3,   h: 1.5   },
     goat:   { height: 'low',    color: 'rgba(245, 222, 179, 0.7)',shape: 'rect',     w: 1.5, h: 1.5 },
     totem:  { height: 'high',   color: 'rgba(105, 105, 105, 0.7)',shape: 'circle',   w: 1,   h: 1   },
-    x:      { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'polygon', w: 2, h: 2,
-        vertices: [
-            {x: -1, y: -1}, {x: -0.4, y: -1}, {x: 0, y: -0.3}, {x: 0.4, y: -1}, {x: 1, y: -1},
-            {x: 0.3, y: 0}, {x: 1, y: 1}, {x: 0.4, y: 1}, {x: 0, y: 0.3}, {x: -0.4, y: 1},
-            {x: -1, y: 1}, {x: -0.3, y: 0}
-        ]
+    x:      { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'polygon', w: 2, h: 2, vertices: [{x: -1, y: -1}, {x: -0.4, y: -1}, {x: 0, y: -0.3}, {x: 0.4, y: -1}, {x: 1, y: -1}, {x: 0.3, y: 0}, {x: 1, y: 1}, {x: 0.4, y: 1}, {x: 0, y: 0.3}, {x: -0.4, y: 1}, {x: -1, y: 1}, {x: -0.3, y: 0}] }
+};
+
+// ========================================
+// CONTROLEURS
+// ========================================
+window.setAppMode = function(mode) {
+    document.getElementById('btn-mode-calc').classList.remove('active');
+    document.getElementById('btn-mode-strat').classList.remove('active');
+    document.getElementById('btn-mode-' + mode).classList.add('active');
+    isStrategyMode = (mode === 'strat');
+};
+
+window.setTool = function(tool) {
+    currentStrategyTool = tool;
+    document.getElementById('btn-tool-place').classList.remove('active');
+    document.getElementById('btn-tool-select').classList.remove('active');
+    document.getElementById('btn-tool-arrow').classList.remove('active');
+    document.getElementById('btn-tool-' + tool).classList.add('active');
+};
+
+window.nextStrategyPlayer = function() {
+    previewLines = []; 
+    if (currentStrategyPlayer < 5) {
+        currentStrategyPlayer++;
+        document.getElementById('currentPlayerNum').textContent = currentStrategyPlayer;
+        document.getElementById('btnNextPlayerNum').textContent = currentStrategyPlayer;
+        setTool('place'); 
+        updateUI(); drawCanvas();
+    } else {
+        goToStep(4); 
+    }
+};
+
+window.goToStep = function(step) {
+    currentStep = step;
+    
+    for(let i=1; i<=4; i++) {
+        document.getElementById('indicator-step'+i).classList.remove('active');
+        document.getElementById('panel-step'+i).style.display = 'none';
+    }
+    document.getElementById('indicator-step'+step).classList.add('active');
+    document.getElementById('panel-step'+step).style.display = 'block';
+
+    if (step === 1 || step === 4) canvas.style.cursor = 'default';
+    if (step === 2 || step === 3) canvas.style.cursor = 'crosshair';
+
+    if (step === 3) {
+        if (isStrategyMode) {
+            document.getElementById('step3-title').innerHTML = '👥 3. Planification Joueur par Joueur';
+            document.getElementById('step3-desc').textContent = 'Construis le playbook. Pose le joueur, valide ses lignes, dessine sa relance.';
+            document.getElementById('strategy-tools-step3').style.display = 'block';
+            document.getElementById('actions-calc').style.display = 'none';
+            document.getElementById('actions-strat').style.display = 'flex';
+        } else {
+            document.getElementById('step3-title').innerHTML = '👥 3. Déploiement Global';
+            document.getElementById('step3-desc').textContent = 'Place tes 5 joueurs. L\'analyse est en direct.';
+            document.getElementById('strategy-tools-step3').style.display = 'none';
+            document.getElementById('actions-calc').style.display = 'flex';
+            document.getElementById('actions-strat').style.display = 'none';
+        }
+    }
+
+    if (step === 4) {
+        document.getElementById('recap-calc').style.display = isStrategyMode ? 'none' : 'block';
+        document.getElementById('recap-strat').style.display = isStrategyMode ? 'block' : 'none';
     }
 };
 
 // ========================================
-// GESTIONNAIRES D'ÉVÉNEMENTS
+// NOUVEAU : FONCTION EXPORT IMAGE
 // ========================================
+window.exportPlan = function() {
+    const link = document.createElement('a');
+    link.download = 'Plan_Los_Calamares.png'; 
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+};
 
-document.querySelectorAll('.obstacle-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.obstacle-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedObstacleType = btn.dataset.type;
-        selectedObstacleHeight = btn.dataset.height;
-    });
-});
-
-document.querySelectorAll('.stance-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        const parent = btn.parentElement;
-        parent.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        if (btn.dataset.stance) shooterStance = btn.dataset.stance;
-        if (btn.dataset.team) shooterTeam = btn.dataset.team;
-    });
-});
-
-document.getElementById('sizeSlider').addEventListener('input', (e) => {
-    obstacleSize = parseInt(e.target.value);
-    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`;
-});
-
-canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    if (e.shiftKey) {
-        currentRotation = (currentRotation + (e.deltaY > 0 ? 15 : -15)) % 360;
-        if (currentRotation < 0) currentRotation += 360;
-    } else {
-        obstacleSize = Math.max(15, Math.min(50, obstacleSize + (e.deltaY > 0 ? -2 : 2)));
-        document.getElementById('sizeSlider').value = obstacleSize;
-    }
-    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`;
-});
+// ========================================
+// GESTIONNAIRES D'ÉVÉNEMENTS UI
+// ========================================
 
 document.getElementById('imageInput').addEventListener('change', (e) => {
     const file = e.target.files[0];
@@ -98,12 +132,7 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
         const reader = new FileReader();
         reader.onload = (event) => {
             const img = new Image();
-            img.onload = () => {
-                loadedImage = img;
-                fieldBounds = null;
-                document.getElementById('detectionStatus').textContent = 'Image chargée.';
-                drawCanvas();
-            };
+            img.onload = () => { loadedImage = img; fieldBounds = null; document.getElementById('detectionStatus').textContent = '✅ Layout chargé.'; drawCanvas(); };
             img.src = event.target.result;
         };
         reader.readAsDataURL(file);
@@ -111,75 +140,80 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
 });
 
 document.getElementById('drawFieldBtn').addEventListener('click', () => {
-    isDrawingField = true;
-    fieldStartPos = null;
-    document.getElementById('detectionStatus').textContent = 'Tracez un rectangle sur l\'image (cliquer-glisser)';
-    document.getElementById('drawFieldBtn').style.opacity = '0.5';
+    isDrawingField = true; fieldStartPos = null;
+    document.getElementById('detectionStatus').textContent = 'Tracez le rectangle sur le layout...';
 });
 
-// NOUVEAU : Écouteur pour la case à cocher du filtre
-const filterCb = document.getElementById('filterCenterCheckbox');
-if (filterCb) {
-    filterCb.addEventListener('change', (e) => {
-        filterUsefulLines = e.target.checked;
-        if (shooters.length > 0) calculateSightlines(); // Recalculer direct si on coche
+document.querySelectorAll('.obstacle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.obstacle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedObstacleType = btn.dataset.type; selectedObstacleHeight = btn.dataset.height;
     });
-}
+});
 
-// ========================================
-// INTERFACE UI
-// ========================================
+document.querySelectorAll('.stance-btn').forEach(btn => {
+    if (btn.id.startsWith('btn-mode') || btn.id.startsWith('btn-tool')) return; 
+    btn.addEventListener('click', () => {
+        btn.parentElement.querySelectorAll('.stance-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (btn.dataset.stance) shooterStance = btn.dataset.stance;
+        if (btn.dataset.team) shooterTeam = btn.dataset.team;
+    });
+});
+
+document.getElementById('sizeSlider').addEventListener('input', (e) => { 
+    obstacleSize = parseInt(e.target.value); 
+    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`; 
+});
+
+canvas.addEventListener('wheel', (e) => {
+    if (currentStep !== 2) return; 
+    e.preventDefault();
+    if (e.shiftKey) { 
+        currentRotation = (currentRotation + (e.deltaY > 0 ? 15 : -15)) % 360; 
+        if (currentRotation < 0) currentRotation += 360; 
+    } else { 
+        obstacleSize = Math.max(15, Math.min(50, obstacleSize + (e.deltaY > 0 ? -2 : 2))); 
+        document.getElementById('sizeSlider').value = obstacleSize; 
+    }
+    document.getElementById('sizeValue').textContent = `Taille: ${obstacleSize} | Angle: ${currentRotation}°`;
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+    if(confirm("Tout effacer et recommencer à zéro ?")) {
+        obstacles = []; shooters = []; previewLines = []; lockedLines = []; arrows = []; fieldBounds = null; loadedImage = null;
+        currentStrategyPlayer = 1; document.getElementById('currentPlayerNum').textContent = "1"; document.getElementById('btnNextPlayerNum').textContent = "1";
+        document.getElementById('imageInput').value = ''; document.getElementById('detectionStatus').textContent = 'En attente d\'image...';
+        goToStep(1); updateUI(); drawCanvas();
+    }
+});
 
 function updateUI() {
-    document.getElementById('obstacleCount').textContent = obstacles.length;
-    document.getElementById('shooterCount').textContent = shooters.length;
-    document.getElementById('shooterCountStats').textContent = shooters.length;
-    document.getElementById('lineCount').textContent = sightlines.length;
-
-    const hasShooters = shooters.length > 0;
-    document.getElementById('calculateBtn').disabled = !hasShooters;
+    document.getElementById('lineCount').textContent = previewLines.length + lockedLines.length;
 
     const list = document.getElementById('shooterList');
     list.innerHTML = '';
-    shooters.forEach((s, index) => {
-        const div = document.createElement('div');
-        div.className = 'shooter-item';
-        let icon = s.stance === 'standing' ? '🧍' : s.stance === 'kneeling' ? '🧎' : '🤸';
+    
+    const uniqueShooters = isStrategyMode ? shooters.filter((s, i, a) => a.findIndex(t => t.playerNum === s.playerNum) === i) : shooters;
 
+    uniqueShooters.forEach((s) => {
+        const div = document.createElement('div'); div.className = 'shooter-item';
         div.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleShooter(${s.id}, this.checked)" style="cursor: pointer;">
-                <span>J${index + 1} ${icon} (${s.team === 'left' ? 'G' : 'D'})</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span style="color:${s.color.replace('0.3', '1')}; font-weight:bold;">●</span>
+                <span>Joueur ${s.playerNum}</span>
             </div>
-            <button class="shooter-delete" onclick="removeShooter(${s.id})">X</button>
         `;
         list.appendChild(div);
     });
 }
 
-window.toggleShooter = function(id, isActive) {
-    const shooter = shooters.find(s => s.id === id);
-    if (shooter) {
-        shooter.active = isActive;
-        drawCanvas();
-    }
-}
-
-function removeShooter(id) {
-    shooters = shooters.filter(s => s.id !== id);
-    sightlines = sightlines.filter(l => l.shooterId !== id);
-    updateUI();
-    drawCanvas();
-}
-
 // ========================================
-// INTERACTION AVEC LE CANVAS (SOURIS)
+// INTERACTION SOURIS (RADAR / PLACEMENT)
 // ========================================
-
 function getMousePos(e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    const rect = canvas.getBoundingClientRect(); const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
     return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
 }
 
@@ -187,332 +221,260 @@ canvas.addEventListener('mousedown', (e) => {
     if (!loadedImage) return;
     const pos = getMousePos(e);
 
-    if (isDrawingField) {
-        fieldStartPos = pos;
-        return;
-    }
+    if (isDrawingField && currentStep === 1) { fieldStartPos = pos; return; }
 
-    if (e.ctrlKey || e.metaKey) {
-        let removed = false;
-        const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
-        if (shooterIndex !== -1) { shooters.splice(shooterIndex, 1); removed = true; }
-        else {
+    if (currentStep === 2) {
+        if (e.ctrlKey || e.metaKey) {
             const obsIndex = obstacles.findIndex(o => Math.hypot(o.x - pos.x, o.y - pos.y) < o.size + 10);
-            if (obsIndex !== -1) { obstacles.splice(obsIndex, 1); removed = true; }
+            if (obsIndex !== -1) obstacles.splice(obsIndex, 1);
+        } else {
+            obstacles.push({ x: pos.x, y: pos.y, type: selectedObstacleType, height: selectedObstacleHeight, size: obstacleSize, rotation: currentRotation });
         }
-        if (removed) sightlines = [];
-    } else if (e.shiftKey) {
-        shooters.push({
-            id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam,
-            color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length],
-            active: true
-        });
-        sightlines = [];
-    } else {
-        obstacles.push({
-            x: pos.x, y: pos.y, type: selectedObstacleType, height: selectedObstacleHeight,
-            size: obstacleSize, rotation: currentRotation
-        });
-        sightlines = [];
     }
 
-    updateUI();
-    drawCanvas();
+    if (currentStep === 3) {
+        if (!isStrategyMode) {
+            if (e.ctrlKey || e.metaKey) {
+                const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
+                if (shooterIndex !== -1) shooters.splice(shooterIndex, 1);
+            } else {
+                if (shooters.length < 5) {
+                    shooters.push({ id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam, color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length], active: true, playerNum: shooters.length + 1 });
+                } else { alert("Tu ne peux placer que 5 joueurs max !"); }
+            }
+            calculateSightlines(); 
+        } 
+        else {
+            if (e.ctrlKey) {
+                const arrowIndex = arrows.findIndex(a => pointToLineDistance(pos.x, pos.y, a.x1, a.y1, a.x2, a.y2) < 10);
+                if (arrowIndex !== -1) { arrows.splice(arrowIndex, 1); updateUI(); drawCanvas(); return; }
+
+                const lineIndex = lockedLines.findIndex(l => pointToLineDistance(pos.x, pos.y, l.x1, l.y1, l.x2, l.y2) < 8);
+                if (lineIndex !== -1) { lockedLines.splice(lineIndex, 1); updateUI(); drawCanvas(); return; }
+
+                const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
+                if (shooterIndex !== -1) shooters.splice(shooterIndex, 1);
+                calculateSightlines();
+            } else {
+                if (currentStrategyTool === 'place') {
+                    shooters.push({ id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam, color: SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length], active: true, playerNum: currentStrategyPlayer });
+                    calculateSightlines();
+                } 
+                else if (currentStrategyTool === 'select') {
+                    let clickedPreviewIndex = -1; let minDistance = 8;
+                    for (let i = previewLines.length - 1; i >= 0; i--) {
+                        const dist = pointToLineDistance(pos.x, pos.y, previewLines[i].x1, previewLines[i].y1, previewLines[i].x2, previewLines[i].y2);
+                        if (dist < minDistance) { minDistance = dist; clickedPreviewIndex = i; }
+                    }
+                    if (clickedPreviewIndex !== -1) { 
+                        lockedLines.push(previewLines.splice(clickedPreviewIndex, 1)[0]); 
+                    }
+                } 
+                else if (currentStrategyTool === 'arrow') {
+                    isDrawingArrow = true; arrowStartPos = pos; arrowCurrentPos = pos; return;
+                }
+            }
+        }
+    }
+
+    updateUI(); drawCanvas();
 });
 
 canvas.addEventListener('mousemove', (e) => {
-    if (isDrawingField && fieldStartPos) {
-        const pos = getMousePos(e);
-        drawCanvas();
+    if (isDrawingField && fieldStartPos && currentStep === 1) {
+        drawCanvas(); const pos = getMousePos(e);
         ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.setLineDash([5, 5]);
-        ctx.strokeRect(fieldStartPos.x, fieldStartPos.y, pos.x - fieldStartPos.x, pos.y - fieldStartPos.y);
-        ctx.setLineDash([]);
+        ctx.strokeRect(fieldStartPos.x, fieldStartPos.y, pos.x - fieldStartPos.x, pos.y - fieldStartPos.y); ctx.setLineDash([]);
     }
+    if (isDrawingArrow && arrowStartPos && currentStep === 3) { arrowCurrentPos = getMousePos(e); drawCanvas(); }
 });
 
 canvas.addEventListener('mouseup', (e) => {
-    if (isDrawingField && fieldStartPos) {
-        const pos = getMousePos(e);
-        const w = Math.abs(pos.x - fieldStartPos.x);
-        const h = Math.abs(pos.y - fieldStartPos.y);
-
-        if (w > 20 && h > 20) {
-            fieldBounds = { x: Math.min(fieldStartPos.x, pos.x), y: Math.min(fieldStartPos.y, pos.y), w: w, h: h };
-            document.getElementById('detectionStatus').textContent = 'Limites définies !';
-        } else {
-            document.getElementById('detectionStatus').textContent = 'Tracé annulé (trop petit).';
+    if (isDrawingField && fieldStartPos && currentStep === 1) {
+        const pos = getMousePos(e); const w = Math.abs(pos.x - fieldStartPos.x); const h = Math.abs(pos.y - fieldStartPos.y);
+        if (w > 20 && h > 20) { fieldBounds = { x: Math.min(fieldStartPos.x, pos.x), y: Math.min(fieldStartPos.y, pos.y), w: w, h: h }; document.getElementById('detectionStatus').textContent = '✅ Limites définies !'; }
+        isDrawingField = false; fieldStartPos = null; updateUI(); drawCanvas();
+    }
+    if (isDrawingArrow && arrowStartPos && arrowCurrentPos && currentStep === 3) {
+        if (Math.hypot(arrowCurrentPos.x - arrowStartPos.x, arrowCurrentPos.y - arrowStartPos.y) > 10) { 
+            const playerColor = SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length].replace('0.3', '1');
+            arrows.push({ x1: arrowStartPos.x, y1: arrowStartPos.y, x2: arrowCurrentPos.x, y2: arrowCurrentPos.y, color: playerColor }); 
         }
-
-        isDrawingField = false; fieldStartPos = null;
-        document.getElementById('drawFieldBtn').style.opacity = '1';
-        sightlines = [];
-        updateUI(); drawCanvas();
+        isDrawingArrow = false; arrowStartPos = null; arrowCurrentPos = null; drawCanvas();
     }
 });
 
 // ========================================
-// MOTEUR DE RENDU (DESSIN DES FORMES)
+// MOTEUR DE RENDU
 // ========================================
-
 function drawCanvas() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (loadedImage) {
-        ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
-    }
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (loadedImage) ctx.drawImage(loadedImage, 0, 0, canvas.width, canvas.height);
 
     if (fieldBounds) {
-        // Tracé du rectangle jaune du terrain
-        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
-
-        // NOUVEAU : Dessiner la Ligne du 50 (milieu)
+        ctx.strokeStyle = 'rgba(255, 255, 0, 0.6)'; ctx.lineWidth = 3; ctx.strokeRect(fieldBounds.x, fieldBounds.y, fieldBounds.w, fieldBounds.h);
         const centerX = fieldBounds.x + fieldBounds.w / 2;
-        ctx.beginPath();
-        ctx.moveTo(centerX, fieldBounds.y);
-        ctx.lineTo(centerX, fieldBounds.y + fieldBounds.h);
-        ctx.setLineDash([10, 10]); // Ligne pointillée
-        ctx.strokeStyle = 'rgba(239, 83, 80, 0.6)'; // Couleur rouge
-        ctx.stroke();
-        ctx.setLineDash([]); // On réinitialise pour la suite
+        ctx.beginPath(); ctx.moveTo(centerX, fieldBounds.y); ctx.lineTo(centerX, fieldBounds.y + fieldBounds.h);
+        ctx.setLineDash([10, 10]); ctx.strokeStyle = 'rgba(239, 83, 80, 0.6)'; ctx.stroke(); ctx.setLineDash([]); 
     }
 
-    sightlines.forEach(line => {
-        const shooter = shooters.find(s => s.id === line.shooterId);
-        if (shooter && shooter.active) {
-            ctx.beginPath(); 
-            ctx.moveTo(line.x1, line.y1); 
-            ctx.lineTo(line.x2, line.y2);
-            
-            // --- NOUVELLE LOGIQUE VISUELLE ---
-            if (line.isBlind) {
-                ctx.setLineDash([5, 5]); // Crée l'effet pointillé
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)'; // Noir légèrement transparent pour le blind
-                ctx.lineWidth = 2; // Un poil plus épais pour bien ressortir
-            } else {
-                ctx.setLineDash([]); // Ligne continue
-                ctx.strokeStyle = line.color; // Reste à la couleur du joueur pour le tendu
-                ctx.lineWidth = 1.5; 
-            }
-            
-            ctx.stroke();
-            
-            // On réinitialise les pointillés pour ne pas affecter le reste du dessin
-            ctx.setLineDash([]); 
+    ctx.globalAlpha = 1.0; 
+    lockedLines.forEach(line => {
+        ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
+        if (line.isBlind) { 
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = line.color.replace('0.3', '0.9'); ctx.lineWidth = 2.5; 
+        } else { 
+            ctx.setLineDash([]); ctx.strokeStyle = line.color.replace('0.3', '1'); ctx.lineWidth = 2; 
         }
+        ctx.stroke(); ctx.setLineDash([]); 
     });
 
+    ctx.globalAlpha = isStrategyMode ? 0.3 : 1.0; 
+    previewLines.forEach(line => {
+        ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
+        if (line.isBlind) { 
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = isStrategyMode ? line.color.replace('0.3', '0.7') : line.color.replace('0.3', '0.9'); ctx.lineWidth = 2; 
+        } else { 
+            ctx.setLineDash([]); ctx.strokeStyle = isStrategyMode ? line.color : line.color.replace('0.3', '1'); ctx.lineWidth = 1.5; 
+        }
+        ctx.stroke(); ctx.setLineDash([]); 
+    });
+
+    ctx.globalAlpha = 1.0;
     obstacles.forEach(obs => {
-        const config = OBSTACLE_CONFIG[obs.type];
-        if (!config) return;
-
-        const w = obs.size * config.w;
-        const h = obs.size * config.h;
-
-        ctx.save();
-        ctx.translate(obs.x, obs.y);
-        ctx.rotate(obs.rotation * Math.PI / 180);
-
-        ctx.fillStyle = config.color;
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
-
+        const config = OBSTACLE_CONFIG[obs.type]; if (!config) return;
+        const w = obs.size * config.w; const h = obs.size * config.h;
+        ctx.save(); ctx.translate(obs.x, obs.y); ctx.rotate(obs.rotation * Math.PI / 180);
+        ctx.fillStyle = config.color; ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
         ctx.beginPath();
-        if (config.shape === 'rect') {
-            ctx.rect(-w/2, -h/2, w, h);
-        } else if (config.shape === 'circle') {
-            ctx.arc(0, 0, w/2, 0, Math.PI * 2);
-        } else if (config.shape === 'triangle') {
-            ctx.moveTo(0, -h/2);
-            ctx.lineTo(w/2, h/2);
-            ctx.lineTo(-w/2, h/2);
-            ctx.closePath();
-        } else if (config.shape === 'half-circle') {
-            ctx.arc(0, 0, w/2, 0, Math.PI);
-            ctx.closePath();
-        } else if (config.shape === 'polygon' && config.vertices) {
-            ctx.moveTo(config.vertices[0].x * w/2, config.vertices[0].y * h/2);
-            for (let i = 1; i < config.vertices.length; i++) {
-                ctx.lineTo(config.vertices[i].x * w/2, config.vertices[i].y * h/2);
-            }
-            ctx.closePath();
-        }
-        ctx.fill();
-        ctx.stroke();
-        ctx.restore();
+        if (config.shape === 'rect') { ctx.rect(-w/2, -h/2, w, h); } 
+        else if (config.shape === 'circle') { ctx.arc(0, 0, w/2, 0, Math.PI * 2); } 
+        else if (config.shape === 'triangle') { ctx.moveTo(0, -h/2); ctx.lineTo(w/2, h/2); ctx.lineTo(-w/2, h/2); ctx.closePath(); } 
+        else if (config.shape === 'polygon') { ctx.moveTo(config.vertices[0].x * w/2, config.vertices[0].y * h/2); for (let i=1; i<config.vertices.length; i++) ctx.lineTo(config.vertices[i].x * w/2, config.vertices[i].y * h/2); ctx.closePath(); }
+        ctx.fill(); ctx.stroke(); ctx.restore();
     });
 
-    shooters.forEach((s, index) => {
+    shooters.forEach((s) => {
         ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
-        ctx.fillStyle = s.active ? s.color.replace('0.3', '1') : s.color;
-        ctx.fill();
+        ctx.fillStyle = s.active ? s.color.replace('0.3', '1') : s.color; ctx.fill();
         ctx.strokeStyle = s.team === 'left' ? '#000' : '#FFF'; ctx.lineWidth = 2; ctx.stroke();
-        ctx.fillStyle = s.team === 'left' ? '#FFF' : '#000';
-        ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(index + 1, s.x, s.y);
+        ctx.fillStyle = s.team === 'left' ? '#FFF' : '#000'; ctx.font = 'bold 10px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(s.playerNum, s.x, s.y);
     });
+
+    arrows.forEach(a => drawArrow(ctx, a.x1, a.y1, a.x2, a.y2, a.color));
+    
+    if (isDrawingArrow && arrowStartPos && arrowCurrentPos) {
+        const liveColor = SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length].replace('0.3', '1');
+        drawArrow(ctx, arrowStartPos.x, arrowStartPos.y, arrowCurrentPos.x, arrowCurrentPos.y, liveColor);
+    }
 }
 
 // ========================================
-// ALGORITHME DE RAYCASTING (LIGNES ET COLLISION)
+// MOTEUR BALISTIQUE & CALCULS MATHS
 // ========================================
-
-document.getElementById('calculateBtn').addEventListener('click', () => { calculateSightlines(); });
-
-document.getElementById('resetBtn').addEventListener('click', () => {
-    if(confirm("Tout effacer (obstacles, joueurs, et terrain) ?")) {
-        obstacles = []; shooters = []; sightlines = []; fieldBounds = null;
-        updateUI(); drawCanvas();
-    }
-});
-
 function calculateSightlines() {
-    sightlines = [];
-
-    const minX = fieldBounds ? fieldBounds.x : 0;
-    const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;
-    const minY = fieldBounds ? fieldBounds.y : 0;
-    const maxY = fieldBounds ? fieldBounds.y + fieldBounds.h : canvas.height;
+    previewLines = []; 
+    const minX = fieldBounds ? fieldBounds.x : 0; const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;
+    const minY = fieldBounds ? fieldBounds.y : 0; const maxY = fieldBounds ? fieldBounds.y + fieldBounds.h : canvas.height;
     const centerX = fieldBounds ? fieldBounds.x + fieldBounds.w / 2 : canvas.width / 2;
 
+    // NOUVEAU : Trouver la toute dernière position posée pour le joueur actuel
+    let latestShooterId = null;
+    if (isStrategyMode) {
+        const playerShooters = shooters.filter(s => s.playerNum === currentStrategyPlayer);
+        if (playerShooters.length > 0) {
+            latestShooterId = playerShooters[playerShooters.length - 1].id;
+        }
+    }
+
     shooters.forEach(shooter => {
+        // En mode stratégie, on ne calcule les brouillons QUE pour la DERNIÈRE position du joueur actuel !
+        if (isStrategyMode && shooter.id !== latestShooterId) return;
+
         for (let angle = 0; angle < 360; angle += 1) {
-            const rad = angle * Math.PI / 180;
-            const step = 4;
+            const rad = angle * Math.PI / 180; const step = 4;
+            let currentX = shooter.x; let currentY = shooter.y;
+            let tenduHit = false; let blindHit = (shooter.stance === 'prone'); 
+            let tenduEnd = null; let blindEnd = null;
             
-            let currentX = shooter.x;
-            let currentY = shooter.y;
-            
-            let tenduHit = false;
-            let blindHit = (shooter.stance === 'prone'); // Si couché, le blind est annulé d'office
-            
-            let tenduEnd = null;
-            let blindEnd = null;
-            
-            // Le rayon avance jusqu'à ce que les DEUX trajectoires soient bloquées
             while (currentX >= minX && currentX <= maxX && currentY >= minY && currentY <= maxY) {
-                currentX += Math.cos(rad) * step;
-                currentY += Math.sin(rad) * step;
-                
+                currentX += Math.cos(rad) * step; currentY += Math.sin(rad) * step;
                 const distFromShooter = Math.hypot(currentX - shooter.x, currentY - shooter.y);
                 let collidedObstacle = null;
                 
-                // Détection de collision
                 for (let obs of obstacles) {
-                    const config = OBSTACLE_CONFIG[obs.type];
-                    let collision = false;
-                    const w = obs.size * config.w;
-                    const h = obs.size * config.h;
-
-                    if (config.shape === 'circle') {
-                        collision = (Math.hypot(currentX - obs.x, currentY - obs.y) <= w/2);
-                    } else {
-                        const dx = currentX - obs.x; const dy = currentY - obs.y;
-                        const angleRad = -obs.rotation * Math.PI / 180;
-                        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
-                        const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
-
-                        if (config.shape === 'rect') {
-                            collision = (Math.abs(localX) <= w/2 && Math.abs(localY) <= h/2);
-                        } else if (config.shape === 'triangle') {
-                            if (localY >= -h/2 && localY <= h/2) collision = Math.abs(localX) <= ((w/2) * ((localY + h/2) / h));
-                        } else if (config.shape === 'half-circle') {
-                            collision = (Math.hypot(localX, localY) <= w/2 && localY >= 0);
-                        } else if (config.shape === 'polygon' && config.vertices) {
-                            const normX = localX / (w/2); const normY = localY / (h/2);
-                            let inside = false;
+                    const config = OBSTACLE_CONFIG[obs.type]; let collision = false;
+                    const w = obs.size * config.w; const h = obs.size * config.h;
+                    if (config.shape === 'circle') { collision = (Math.hypot(currentX - obs.x, currentY - obs.y) <= w/2); } 
+                    else {
+                        const dx = currentX - obs.x; const dy = currentY - obs.y; const angleRad = -obs.rotation * Math.PI / 180;
+                        const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad); const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
+                        if (config.shape === 'rect') { collision = (Math.abs(localX) <= w/2 && Math.abs(localY) <= h/2); } 
+                        else if (config.shape === 'triangle') { if (localY >= -h/2 && localY <= h/2) collision = Math.abs(localX) <= ((w/2) * ((localY + h/2) / h)); } 
+                        else if (config.shape === 'polygon') {
+                            const normX = localX / (w/2); const normY = localY / (h/2); let inside = false;
                             for (let i = 0, j = config.vertices.length - 1; i < config.vertices.length; j = i++) {
-                                if (((config.vertices[i].y > normY) !== (config.vertices[j].y > normY)) && 
-                                    (normX < (config.vertices[j].x - config.vertices[i].x) * (normY - config.vertices[i].y) / (config.vertices[j].y - config.vertices[i].y) + config.vertices[i].x)) 
-                                    inside = !inside;
+                                if (((config.vertices[i].y > normY) !== (config.vertices[j].y > normY)) && (normX < (config.vertices[j].x - config.vertices[i].x) * (normY - config.vertices[i].y) / (config.vertices[j].y - config.vertices[i].y) + config.vertices[i].x)) inside = !inside;
                             }
                             collision = inside;
                         }
                     }
-
-                    if (collision) {
-                        collidedObstacle = obs;
-                        break; 
-                    }
+                    if (collision) { collidedObstacle = obs; break; }
                 }
                 
                 if (collidedObstacle) {
                     const obs = collidedObstacle;
-                    
-                    // 1. Calcul de l'arrêt du Tir Tendu
                     if (!tenduHit) {
                         let blocksTendu = false;
                         if (shooter.stance === 'standing') blocksTendu = (obs.height === 'high');
                         else if (shooter.stance === 'kneeling') blocksTendu = (obs.height === 'medium' || obs.height === 'high');
                         else if (shooter.stance === 'prone') blocksTendu = true;
-
-                        if (blocksTendu) {
-                            tenduHit = true;
-                            tenduEnd = {x: currentX, y: currentY};
-                        }
+                        if (blocksTendu) { tenduHit = true; tenduEnd = {x: currentX, y: currentY}; }
                     }
-                    
-                    // 2. Calcul de l'arrêt du Tir en Cloche (Blind)
                     if (!blindHit) {
                         let blocksBlind = false;
-                        if (distFromShooter < 50) {
-                            blocksBlind = true; // Bloqué par son propre module d'appui
-                        } else if (obs.type === 'totem') {
-                            blocksBlind = true; // Totem impossible à lober
-                        } else if (distFromShooter > 250) {
-                            blocksBlind = true; // La bille retombe et tape l'obstacle
-                        }
-                        
-                        if (blocksBlind) {
-                            blindHit = true;
-                            blindEnd = {x: currentX, y: currentY};
-                        }
+                        if (distFromShooter < 50 || obs.type === 'totem' || distFromShooter > 250) blocksBlind = true; 
+                        if (blocksBlind) { blindHit = true; blindEnd = {x: currentX, y: currentY}; }
                     }
                 }
-                
-                // Si les deux trajectoires sont bloquées, on passe au rayon suivant
                 if (tenduHit && blindHit) break; 
             }
             
-            // Si le rayon sort du terrain sans toucher, on fixe la fin aux coordonnées actuelles
             if (!tenduHit) tenduEnd = {x: currentX, y: currentY};
             if (!blindHit && shooter.stance !== 'prone') blindEnd = {x: currentX, y: currentY};
-            
-            // --- FILTRAGE ET DESSIN (Ne garde que ce qui passe le 50) ---
             
             let tenduUseful = true;
             if (shooter.team === 'left' && tenduEnd.x < centerX) tenduUseful = false;
             if (shooter.team === 'right' && tenduEnd.x > centerX) tenduUseful = false;
-            
-            if (tenduUseful) {
-                sightlines.push({ 
-                    x1: shooter.x, y1: shooter.y, 
-                    x2: tenduEnd.x, y2: tenduEnd.y, 
-                    shooterId: shooter.id, color: shooter.color, isBlind: false 
-                });
-            }
+            if (tenduUseful) previewLines.push({ x1: shooter.x, y1: shooter.y, x2: tenduEnd.x, y2: tenduEnd.y, shooterId: shooter.id, color: shooter.color, isBlind: false });
             
             if (blindEnd) {
                 let blindUseful = true;
                 if (shooter.team === 'left' && blindEnd.x < centerX) blindUseful = false;
                 if (shooter.team === 'right' && blindEnd.x > centerX) blindUseful = false;
-                
-                const distTendu = Math.hypot(tenduEnd.x - shooter.x, tenduEnd.y - shooter.y);
-                const distBlind = Math.hypot(blindEnd.x - shooter.x, blindEnd.y - shooter.y);
-                
-                // On ne dessine le blind QUE s'il permet de couvrir plus de terrain que le tir tendu
-                if (blindUseful && distBlind > distTendu + 15) {
-                    sightlines.push({ 
-                        // Super astuce visuelle : on démarre les pointillés là où le tir tendu a été bloqué
-                        x1: tenduEnd.x, y1: tenduEnd.y, 
-                        x2: blindEnd.x, y2: blindEnd.y, 
-                        shooterId: shooter.id, color: shooter.color, isBlind: true 
-                    });
-                }
+                const distTendu = Math.hypot(tenduEnd.x - shooter.x, tenduEnd.y - shooter.y); const distBlind = Math.hypot(blindEnd.x - shooter.x, blindEnd.y - shooter.y);
+                if (blindUseful && distBlind > distTendu + 15) previewLines.push({ x1: tenduEnd.x, y1: tenduEnd.y, x2: blindEnd.x, y2: blindEnd.y, shooterId: shooter.id, color: shooter.color, isBlind: true });
             }
         }
     });
+}
 
-    updateUI(); drawCanvas();
+function pointToLineDistance(px, py, x1, y1, x2, y2) {
+    const A = px - x1; const B = py - y1; const C = x2 - x1; const D = y2 - y1;
+    const dot = A * C + B * D; const lenSq = C * C + D * D; let param = -1;
+    if (lenSq !== 0) param = dot / lenSq;
+    let xx, yy;
+    if (param < 0) { xx = x1; yy = y1; } else if (param > 1) { xx = x2; yy = y2; } else { xx = x1 + param * C; yy = y1 + param * D; }
+    const dx = px - xx; const dy = py - yy; return Math.sqrt(dx * dx + dy * dy);
+}
+
+function drawArrow(ctx, fromx, fromy, tox, toy, color) {
+    const headlen = 12; const dx = tox - fromx; const dy = toy - fromy; const angle = Math.atan2(dy, dx);
+    ctx.beginPath(); ctx.moveTo(fromx, fromy); ctx.lineTo(tox, toy);
+    ctx.lineTo(tox - headlen * Math.cos(angle - Math.PI / 6), toy - headlen * Math.sin(angle - Math.PI / 6));
+    ctx.moveTo(tox, toy); ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
+    ctx.strokeStyle = color; ctx.lineWidth = 3.5; ctx.stroke();
 }

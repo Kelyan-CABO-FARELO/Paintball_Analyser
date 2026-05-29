@@ -1,316 +1,105 @@
-/* ========================================
-   STYLES GÉNÉRAUX
-   ======================================== */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* RESET & FONTS */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; height: 100vh; overflow: hidden; }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 50%, #0a0e27 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
+/* LAYOUT PRINCIPAL */
+#app { display: flex; flex-direction: column; height: 100vh; }
 
-.container {
-    max-width: 1600px;
-    margin: 0 auto;
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 16px;
-    padding: 30px;
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5);
-}
+/* TOPBAR */
+.topbar { background: #1e293b; padding: 0 20px; height: 70px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+.logo { font-weight: 800; font-size: 1.2rem; color: #e2e8f0; display: flex; align-items: center; gap: 10px; }
+.badge { background: #38bdf8; color: #0f172a; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
 
-h1 {
-    color: #1a1f3a;
+/* STEPPER */
+.stepper { display: flex; gap: 40px; }
+.step { color: #64748b; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
+.step-num { display: inline-flex; justify-content: center; align-items: center; width: 24px; height: 24px; background: #334155; border-radius: 50%; font-size: 0.8rem; }
+.step.active { color: #38bdf8; }
+.step.active .step-num { background: #38bdf8; color: #0f172a; }
+
+/* MAIN CONTENT */
+.main-content { display: flex; flex: 1; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar { width: 320px; background: #1e293b; border-right: 1px solid #334155; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.step-panel { animation: fadeIn 0.3s ease-in-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+h3 { font-size: 1.1rem; margin-bottom: 5px; color: #f1f5f9; }
+.help-text { font-size: 0.8rem; color: #94a3b8; margin-bottom: 15px; line-height: 1.4; }
+label { display: block; font-size: 0.85rem; font-weight: 600; color: #cbd5e1; margin-bottom: 8px; margin-top: 15px; }
+
+/* INPUTS & BOUTONS */
+.file-input { background: #0f172a; padding: 10px; border-radius: 6px; border: 1px dashed #475569; width: 100%; color: #94a3b8; font-size: 0.8rem; margin-bottom: 10px; }
+.status-text { font-size: 0.8rem; color: #38bdf8; margin-top: 5px; font-weight: 600;}
+
+.btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+.btn-primary { background: #38bdf8; color: #0f172a; }
+.btn-primary:hover { background: #7dd3fc; }
+.btn-secondary { background: #334155; color: #f8fafc; border: 1px solid #475569; }
+.btn-secondary:hover { background: #475569; }
+.btn-success { background: #22c55e; color: #0f172a; }
+.btn-success:hover { background: #4ade80; }
+.btn-outline { background: transparent; color: #94a3b8; border: 1px solid #475569; }
+.btn-outline:hover { background: #334155; color: #f8fafc; }
+.btn-danger-outline { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+.btn-danger-outline:hover { background: #ef4444; color: #fff; }
+
+.step-actions { display: flex; gap: 10px; margin-top: 30px; border-top: 1px solid #334155; padding-top: 20px; }
+
+/* GRILLES & SELECTEURS (AVEC BADGES) */
+.obstacle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.obstacle-btn { position: relative; background: #0f172a; border: 1px solid #334155; padding: 12px 10px; border-radius: 6px; text-align: center; font-size: 0.8rem; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+.obstacle-btn:hover { border-color: #38bdf8; color: #f8fafc; }
+.obstacle-btn.active { background: #0ea5e9; border-color: #38bdf8; color: #fff; font-weight: bold; }
+
+/* Badges de hauteur */
+.height-badge { position: absolute; top: 2px; right: 2px; color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.55rem; font-weight: bold; letter-spacing: 0.5px; }
+.height-low { background: #16a34a; }    /* Vert */
+.height-medium { background: #ea580c; } /* Orange */
+.height-high { background: #dc2626; }   /* Rouge */
+
+.slider-group { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 6px; border: 1px solid #334155;}
+input[type=range] { width: 100%; cursor: pointer; }
+
+.stance-selector { display: flex; gap: 5px; background: #0f172a; padding: 5px; border-radius: 8px; }
+.stance-btn { flex: 1; text-align: center; padding: 8px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; color: #94a3b8; transition: 0.2s; }
+.stance-btn.active { background: #334155; color: #38bdf8; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+
+.mode-switch { display: flex; background: #0f172a; padding: 5px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #38bdf8;}
+
+/* JOUEURS LISTE */
+.shooter-list { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; }
+.shooter-item { background: #0f172a; border: 1px solid #334155; padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+.shooter-delete { background: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
+
+.stats-box { margin-top: 20px; background: #0f172a; padding: 15px; border-radius: 6px; font-size: 0.85rem; text-align: center; border: 1px dashed #475569;}
+
+/* CANVAS AREA */
+.canvas-wrapper { flex: 1; display: flex; justify-content: center; align-items: center; background: #0f172a; padding: 20px; overflow: auto; }
+canvas { background: #ffffff; border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); border: 2px solid #334155; cursor: crosshair; }
+
+/* --- NOUVEAUTÉS POUR L'ETAPE 4 (CHAT) --- */
+.chat-placeholder {
+    margin-top: 20px;
+    background: #1e293b;
+    border: 1px dashed #38bdf8;
+    border-radius: 8px;
+    padding: 15px;
+}
+.chat-header {
+    font-weight: bold;
+    color: #38bdf8;
     margin-bottom: 10px;
-    font-size: 36px;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 5px;
 }
-
-.subtitle {
-    color: #666;
-    margin-bottom: 30px;
-    font-size: 14px;
-}
-
-/* ========================================
-   LAYOUT PRINCIPAL
-   ======================================== */
-.main-grid {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 30px;
-}
-
-.controls {
+.chat-body {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    min-height: 80px;
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-/* ========================================
-   PANNEAUX DE CONTRÔLE
-   ======================================== */
-.panel {
-    padding: 20px;
-    border-radius: 10px;
-    border: 2px solid;
-}
-
-.panel-purple {
-    background: #f3e5f5;
-    border-color: #ab47bc;
-}
-
-.panel-blue {
-    background: #e3f2fd;
-    border-color: #42a5f5;
-}
-
-.panel-green {
-    background: #e8f5e9;
-    border-color: #66bb6a;
-}
-
-.panel-orange {
-    background: #fff3e0;
-    border-color: #ffa726;
-}
-
-.panel h3 {
-    margin-bottom: 15px;
-    font-size: 16px;
-    font-weight: bold;
-}
-
-/* ========================================
-   GRILLE D'OBSTACLES
-   ======================================== */
-.obstacle-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
-
-.obstacle-btn {
-    padding: 10px 6px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    background: white;
-    cursor: pointer;
-    font-size: 11px;
-    transition: all 0.2s;
+    align-items: center;
     text-align: center;
-    position: relative;
-}
-
-.obstacle-btn:hover {
-    border-color: #ab47bc;
-    background: #f3e5f5;
-    transform: scale(1.05);
-}
-
-.obstacle-btn.active {
-    border-color: #ab47bc;
-    background: #ab47bc;
-    color: white;
-    font-weight: bold;
-}
-
-/* Badge de hauteur d'obstacle */
-.height-badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background: rgba(0,0,0,0.7);
-    color: white;
-    padding: 2px 4px;
-    border-radius: 3px;
-    font-size: 9px;
-    font-weight: bold;
-}
-
-.height-low { background: #4caf50 !important; }
-.height-medium { background: #ff9800 !important; }
-.height-high { background: #f44336 !important; }
-
-/* ========================================
-   BOUTONS
-   ======================================== */
-button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-success {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-}
-
-.btn-danger {
-    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-    color: #333;
-}
-
-/* ========================================
-   CANVAS ET INPUT
-   ======================================== */
-input[type="file"] {
-    width: 100%;
-    padding: 10px;
-    border: 2px dashed #66bb6a;
-    border-radius: 8px;
-    cursor: pointer;
-    background: white;
-    font-size: 12px;
-}
-
-.canvas-container {
-    border: 4px solid #ab47bc;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #f5f5f5;
-}
-
-canvas {
-    display: block;
-    width: 100%;
-    cursor: crosshair;
-    background: #ffffff;
-}
-
-/* ========================================
-   LISTES ET STATS
-   ======================================== */
-.stats {
-    font-size: 14px;
-    line-height: 2;
-}
-
-.color-legend {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 12px;
-}
-
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.legend-color {
-    width: 30px;
-    height: 20px;
-    border-radius: 4px;
-    border: 1px solid #333;
-}
-
-ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-li {
-    margin: 6px 0;
-    color: #1976d2;
-    font-size: 13px;
-}
-
-.shooter-list {
-    max-height: 150px;
-    overflow-y: auto;
-    background: white;
-    border-radius: 6px;
-    padding: 10px;
-}
-
-.shooter-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px;
-    margin: 4px 0;
-    background: #f5f5f5;
-    border-radius: 4px;
-}
-
-.shooter-delete {
-    background: #f44336;
-    color: white;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 11px;
-}
-
-.stance-selector {
-    display: flex;
-    gap: 5px;
-    margin-top: 10px;
-}
-
-.stance-btn {
-    flex: 1;
-    padding: 8px;
-    border: 2px solid #ddd;
-    background: white;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 11px;
-    transition: all 0.2s;
-}
-
-.stance-btn:hover {
-    border-color: #42a5f5;
-    background: #e3f2fd;
-}
-
-.stance-btn.active {
-    border-color: #42a5f5;
-    background: #42a5f5;
-    color: white;
-    font-weight: bold;
-}
-
-#detectionStatus {
-    margin-top: 5px;
-    font-size: 11px;
-    color: #666;
-}
-
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-@media (max-width: 1200px) {
-    .main-grid {
-        grid-template-columns: 1fr;
-    }
 }
