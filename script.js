@@ -357,31 +357,41 @@ function calculateSightlines() {
     const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;
     const minY = fieldBounds ? fieldBounds.y : 0;
     const maxY = fieldBounds ? fieldBounds.y + fieldBounds.h : canvas.height;
+    const centerX = fieldBounds ? fieldBounds.x + fieldBounds.w / 2 : canvas.width / 2;
 
     shooters.forEach(shooter => {
         for (let angle = 0; angle < 360; angle += 1) {
             const rad = angle * Math.PI / 180;
+            const step = 4;
+            
             let currentX = shooter.x;
             let currentY = shooter.y;
-            const step = 4;
-            let hit = false;
-
-            while (!hit && currentX >= minX && currentX <= maxX && currentY >= minY && currentY <= maxY) {
+            
+            let tenduHit = false;
+            let blindHit = (shooter.stance === 'prone'); // Si couché, le blind est annulé d'office
+            
+            let tenduEnd = null;
+            let blindEnd = null;
+            
+            // Le rayon avance jusqu'à ce que les DEUX trajectoires soient bloquées
+            while (currentX >= minX && currentX <= maxX && currentY >= minY && currentY <= maxY) {
                 currentX += Math.cos(rad) * step;
                 currentY += Math.sin(rad) * step;
-
+                
+                const distFromShooter = Math.hypot(currentX - shooter.x, currentY - shooter.y);
+                let collidedObstacle = null;
+                
+                // Détection de collision
                 for (let obs of obstacles) {
                     const config = OBSTACLE_CONFIG[obs.type];
+                    let collision = false;
                     const w = obs.size * config.w;
                     const h = obs.size * config.h;
-                    let collision = false;
 
                     if (config.shape === 'circle') {
-                        const dist = Math.sqrt((currentX - obs.x)**2 + (currentY - obs.y)**2);
-                        collision = (dist <= w/2);
+                        collision = (Math.hypot(currentX - obs.x, currentY - obs.y) <= w/2);
                     } else {
-                        const dx = currentX - obs.x;
-                        const dy = currentY - obs.y;
+                        const dx = currentX - obs.x; const dy = currentY - obs.y;
                         const angleRad = -obs.rotation * Math.PI / 180;
                         const localX = dx * Math.cos(angleRad) - dy * Math.sin(angleRad);
                         const localY = dx * Math.sin(angleRad) + dy * Math.cos(angleRad);
@@ -389,53 +399,100 @@ function calculateSightlines() {
                         if (config.shape === 'rect') {
                             collision = (Math.abs(localX) <= w/2 && Math.abs(localY) <= h/2);
                         } else if (config.shape === 'triangle') {
-                            if (localY >= -h/2 && localY <= h/2) {
-                                const allowedWidth = (w/2) * ((localY + h/2) / h);
-                                collision = Math.abs(localX) <= allowedWidth;
-                            }
+                            if (localY >= -h/2 && localY <= h/2) collision = Math.abs(localX) <= ((w/2) * ((localY + h/2) / h));
                         } else if (config.shape === 'half-circle') {
-                            const inCircle = Math.sqrt(localX*localX + localY*localY) <= w/2;
-                            collision = (inCircle && localY >= 0);
+                            collision = (Math.hypot(localX, localY) <= w/2 && localY >= 0);
                         } else if (config.shape === 'polygon' && config.vertices) {
-                            const normX = localX / (w/2);
-                            const normY = localY / (h/2);
+                            const normX = localX / (w/2); const normY = localY / (h/2);
                             let inside = false;
                             for (let i = 0, j = config.vertices.length - 1; i < config.vertices.length; j = i++) {
-                                const xi = config.vertices[i].x, yi = config.vertices[i].y;
-                                const xj = config.vertices[j].x, yj = config.vertices[j].y;
-                                const intersect = ((yi > normY) !== (yj > normY))
-                                    && (normX < (xj - xi) * (normY - yi) / (yj - yi) + xi);
-                                if (intersect) inside = !inside;
+                                if (((config.vertices[i].y > normY) !== (config.vertices[j].y > normY)) && 
+                                    (normX < (config.vertices[j].x - config.vertices[i].x) * (normY - config.vertices[i].y) / (config.vertices[j].y - config.vertices[i].y) + config.vertices[i].x)) 
+                                    inside = !inside;
                             }
                             collision = inside;
                         }
                     }
 
                     if (collision) {
-                        let blocks = false;
-                        if (shooter.stance === 'standing') blocks = (obs.height === 'high');
-                        else if (shooter.stance === 'kneeling') blocks = (obs.height === 'medium' || obs.height === 'high');
-                        else if (shooter.stance === 'prone') blocks = true;
-
-                        if (blocks) { hit = true; break; }
+                        collidedObstacle = obs;
+                        break; 
                     }
                 }
+                
+                if (collidedObstacle) {
+                    const obs = collidedObstacle;
+                    
+                    // 1. Calcul de l'arrêt du Tir Tendu
+                    if (!tenduHit) {
+                        let blocksTendu = false;
+                        if (shooter.stance === 'standing') blocksTendu = (obs.height === 'high');
+                        else if (shooter.stance === 'kneeling') blocksTendu = (obs.height === 'medium' || obs.height === 'high');
+                        else if (shooter.stance === 'prone') blocksTendu = true;
+
+                        if (blocksTendu) {
+                            tenduHit = true;
+                            tenduEnd = {x: currentX, y: currentY};
+                        }
+                    }
+                    
+                    // 2. Calcul de l'arrêt du Tir en Cloche (Blind)
+                    if (!blindHit) {
+                        let blocksBlind = false;
+                        if (distFromShooter < 50) {
+                            blocksBlind = true; // Bloqué par son propre module d'appui
+                        } else if (obs.type === 'totem') {
+                            blocksBlind = true; // Totem impossible à lober
+                        } else if (distFromShooter > 250) {
+                            blocksBlind = true; // La bille retombe et tape l'obstacle
+                        }
+                        
+                        if (blocksBlind) {
+                            blindHit = true;
+                            blindEnd = {x: currentX, y: currentY};
+                        }
+                    }
+                }
+                
+                // Si les deux trajectoires sont bloquées, on passe au rayon suivant
+                if (tenduHit && blindHit) break; 
             }
-
-            // NOUVEAU : On filtre la ligne selon le côté du terrain
-            let isUseful = true;
-            if (filterUsefulLines) {
-                const centerX = fieldBounds ? fieldBounds.x + fieldBounds.w / 2 : canvas.width / 2;
-
-                // Si équipe GAUCHE et que le tir n'atteint pas le centre
-                if (shooter.team === 'left' && currentX < centerX) isUseful = false;
-
-                // Si équipe DROITE et que le tir n'atteint pas le centre
-                if (shooter.team === 'right' && currentX > centerX) isUseful = false;
+            
+            // Si le rayon sort du terrain sans toucher, on fixe la fin aux coordonnées actuelles
+            if (!tenduHit) tenduEnd = {x: currentX, y: currentY};
+            if (!blindHit && shooter.stance !== 'prone') blindEnd = {x: currentX, y: currentY};
+            
+            // --- FILTRAGE ET DESSIN (Ne garde que ce qui passe le 50) ---
+            
+            let tenduUseful = true;
+            if (shooter.team === 'left' && tenduEnd.x < centerX) tenduUseful = false;
+            if (shooter.team === 'right' && tenduEnd.x > centerX) tenduUseful = false;
+            
+            if (tenduUseful) {
+                sightlines.push({ 
+                    x1: shooter.x, y1: shooter.y, 
+                    x2: tenduEnd.x, y2: tenduEnd.y, 
+                    shooterId: shooter.id, color: shooter.color, isBlind: false 
+                });
             }
-
-            if (isUseful) {
-                sightlines.push({ x1: shooter.x, y1: shooter.y, x2: currentX, y2: currentY, shooterId: shooter.id, color: shooter.color });
+            
+            if (blindEnd) {
+                let blindUseful = true;
+                if (shooter.team === 'left' && blindEnd.x < centerX) blindUseful = false;
+                if (shooter.team === 'right' && blindEnd.x > centerX) blindUseful = false;
+                
+                const distTendu = Math.hypot(tenduEnd.x - shooter.x, tenduEnd.y - shooter.y);
+                const distBlind = Math.hypot(blindEnd.x - shooter.x, blindEnd.y - shooter.y);
+                
+                // On ne dessine le blind QUE s'il permet de couvrir plus de terrain que le tir tendu
+                if (blindUseful && distBlind > distTendu + 15) {
+                    sightlines.push({ 
+                        // Super astuce visuelle : on démarre les pointillés là où le tir tendu a été bloqué
+                        x1: tenduEnd.x, y1: tenduEnd.y, 
+                        x2: blindEnd.x, y2: blindEnd.y, 
+                        shooterId: shooter.id, color: shooter.color, isBlind: true 
+                    });
+                }
             }
         }
     });
