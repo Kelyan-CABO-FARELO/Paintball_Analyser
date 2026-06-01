@@ -478,3 +478,89 @@ function drawArrow(ctx, fromx, fromy, tox, toy, color) {
     ctx.moveTo(tox, toy); ctx.lineTo(tox - headlen * Math.cos(angle + Math.PI / 6), toy - headlen * Math.sin(angle + Math.PI / 6));
     ctx.strokeStyle = color; ctx.lineWidth = 3.5; ctx.stroke();
 }
+
+// ========================================
+// TUTORIAL LOGIC
+// ========================================
+const tutorialSteps = [
+    {
+        title: "🦑 Bienvenue sur Paintball Analyser !",
+        text: "Cet outil te permet de préparer tes layouts et stratégies. Il y a deux modes : <br><br><b>🧮 Live (Rapide)</b> : Pour analyser des lignes de tir globales en direct.<br><b>🗺️ Stratégie Pro</b> : Pour construire un playbook joueur par joueur."
+    },
+    {
+        title: "⚙️ 1. Paramètres",
+        text: "Commence par choisir ton mode, puis charge une image du terrain (le layout).<br><br>Ensuite, clique sur <b>Tracer les limites</b> et dessine un rectangle avec ta souris englobant l'aire de jeu sur l'image."
+    },
+    {
+        title: "🚧 2. Modules",
+        text: "Sélectionne un obstacle et clique sur le terrain pour le poser.<br><br><b>Astuces :</b><br>• Utilise la <b>molette</b> de la souris pour changer la taille<br>• <b>Shift + Molette</b> pour pivoter l'obstacle<br>• <b>Ctrl + Clic</b> pour supprimer un obstacle."
+    },
+    {
+        title: "👥 3. Déploiement",
+        text: "Place tes joueurs (maximum 5). Leurs lignes de tir s'afficheront automatiquement selon leur posture (debout, genou, couché).<br><br>En mode <b>Stratégie Pro</b>, tu peux valider une ligne intéressante en cliquant dessus, ou dessiner des parcours de course avec l'outil ↗️ Course."
+    },
+    {
+        title: "✅ 4. Plan de Jeu",
+        text: "Une fois ton plan terminé, tu peux exporter le résultat en image pour le partager avec ton équipe.<br><br>Prêt à élaborer les meilleures tactiques ? 🔫"
+    }
+];
+
+let currentTutStep = 0;
+
+function updateTutorial() {
+    document.getElementById('tut-title').innerHTML = tutorialSteps[currentTutStep].title;
+    document.getElementById('tut-body').innerHTML = `<p>${tutorialSteps[currentTutStep].text}</p>`;
+    
+    document.getElementById('tut-prev').style.display = currentTutStep === 0 ? 'none' : 'block';
+    
+    if (currentTutStep === tutorialSteps.length - 1) {
+        document.getElementById('tut-next').textContent = "Commencer !";
+        document.getElementById('tut-next').classList.remove('btn-primary');
+        document.getElementById('tut-next').classList.add('btn-success');
+    } else {
+        document.getElementById('tut-next').textContent = "Suivant";
+        document.getElementById('tut-next').classList.add('btn-primary');
+        document.getElementById('tut-next').classList.remove('btn-success');
+    }
+    
+    const dots = document.querySelectorAll('.tut-progress .dot');
+    dots.forEach((dot, index) => {
+        dot.className = index === currentTutStep ? 'dot active' : 'dot';
+    });
+}
+
+document.getElementById('tutorialBtn').addEventListener('click', () => {
+    currentTutStep = 0;
+    updateTutorial();
+    document.getElementById('tutorialModal').style.display = 'flex';
+});
+
+document.getElementById('tut-next').addEventListener('click', () => {
+    if (currentTutStep < tutorialSteps.length - 1) {
+        currentTutStep++;
+        updateTutorial();
+    } else {
+        document.getElementById('tutorialModal').style.display = 'none';
+    }
+});
+
+document.getElementById('tut-prev').addEventListener('click', () => {
+    if (currentTutStep > 0) {
+        currentTutStep--;
+        updateTutorial();
+    }
+});
+
+document.getElementById('tut-close').addEventListener('click', () => {
+    document.getElementById('tutorialModal').style.display = 'none';
+});
+
+// Show tutorial automatically on first load
+window.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('tutorialSeen_Paintball')) {
+        currentTutStep = 0;
+        updateTutorial();
+        document.getElementById('tutorialModal').style.display = 'flex';
+        localStorage.setItem('tutorialSeen_Paintball', 'true');
+    }
+});

@@ -17,7 +17,10 @@
                 <div class="step" id="indicator-step3"><span class="step-num">3</span> Déploiement</div>
                 <div class="step" id="indicator-step4"><span class="step-num">4</span> Validation</div>
             </div>
-            <button id="resetBtn" class="btn-danger-outline">🗑️ Reset Total</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="tutorialBtn" class="btn-outline" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">❓ Tutoriel</button>
+                <button id="resetBtn" class="btn-danger-outline">🗑️ Reset Total</button>
+            </div>
         </header>
 
         <main class="main-content">
@@ -135,6 +138,28 @@
                 <canvas id="canvas" width="1000" height="700"></canvas>
             </section>
         </main>
+    </div>
+
+    <!-- TUTORIAL MODAL -->
+    <div id="tutorialModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="tut-title">Bienvenue</h2>
+            <div id="tut-body">
+                <p>Chargement...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="tut-prev" class="btn btn-outline" style="display: none;">Précédent</button>
+                <button id="tut-next" class="btn btn-primary">Suivant</button>
+                <button id="tut-close" class="btn btn-outline">Passer</button>
+            </div>
+            <div class="tut-progress">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>
