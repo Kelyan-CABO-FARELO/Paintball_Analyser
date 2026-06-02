@@ -78,6 +78,15 @@ window.nextStrategyPlayer = function() {
 };
 
 window.goToStep = function(step) {
+    if ((step === 1 || step === 2) && currentStep >= 3) {
+        shooters = []; previewLines = []; lockedLines = []; arrows = [];
+        currentStrategyPlayer = 1; 
+        document.getElementById('currentPlayerNum').textContent = "1"; 
+        document.getElementById('btnNextPlayerNum').textContent = "1";
+        updateUI();
+        drawCanvas();
+    }
+
     currentStep = step;
     
     for(let i=1; i<=4; i++) {
@@ -122,6 +131,96 @@ window.exportPlan = function() {
     link.click();
 };
 
+window.toggleShooter = function(id) {
+    const shooter = shooters.find(s => s.id === id);
+    if (shooter) {
+        shooter.active = !shooter.active;
+        calculateSightlines();
+        updateUI();
+        drawCanvas();
+    }
+};
+
+// ========================================
+// NOUVEAU : FONCTION SAUVEGARDE / CHARGEMENT LAYOUT
+// ========================================
+window.exportLayout = function() {
+    if (!loadedImage) {
+        alert("Aucun terrain à exporter !");
+        return;
+    }
+    const layoutData = {
+        imageSrc: loadedImage.src,
+        fieldBounds: fieldBounds,
+        obstacles: obstacles
+    };
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(layoutData));
+    const link = document.createElement('a');
+    link.download = 'Paintball_Layout.json';
+    link.href = dataStr;
+    link.click();
+};
+
+window.saveLayoutLocal = function() {
+    if (!loadedImage) {
+        alert("Aucun terrain à sauvegarder !");
+        return;
+    }
+    const layoutData = {
+        imageSrc: loadedImage.src,
+        fieldBounds: fieldBounds,
+        obstacles: obstacles
+    };
+    try {
+        localStorage.setItem('Paintball_SavedLayout', JSON.stringify(layoutData));
+        alert("Layout sauvegardé avec succès dans votre navigateur !");
+    } catch (e) {
+        if (e.name === 'QuotaExceededError') {
+            alert("L'image est trop volumineuse pour être sauvegardée dans le navigateur. Téléchargement d'un fichier de sauvegarde...");
+            window.exportLayout();
+        } else {
+            alert("Erreur lors de la sauvegarde locale.");
+        }
+    }
+};
+
+window.loadLayoutLocal = function() {
+    const saved = localStorage.getItem('Paintball_SavedLayout');
+    if (saved) {
+        try {
+            const layoutData = JSON.parse(saved);
+            window.loadLayoutData(layoutData);
+        } catch (e) {
+            alert("Erreur lors du chargement du layout sauvegardé.");
+        }
+    } else {
+        alert("Aucun layout sauvegardé trouvé dans le navigateur.");
+    }
+};
+
+window.loadLayoutData = function(layoutData) {
+    if (layoutData.imageSrc) {
+        const img = new Image();
+        img.onload = () => {
+            loadedImage = img;
+            fieldBounds = layoutData.fieldBounds || null;
+            obstacles = layoutData.obstacles || [];
+            
+            shooters = []; previewLines = []; lockedLines = []; arrows = [];
+            currentStrategyPlayer = 1; 
+            document.getElementById('currentPlayerNum').textContent = "1"; 
+            document.getElementById('btnNextPlayerNum').textContent = "1";
+            
+            document.getElementById('detectionStatus').textContent = '✅ Layout chargé avec succès !';
+            
+            goToStep(2);
+            updateUI();
+            drawCanvas();
+        };
+        img.src = layoutData.imageSrc;
+    }
+};
+
 // ========================================
 // GESTIONNAIRES D'ÉVÉNEMENTS UI
 // ========================================
@@ -137,6 +236,22 @@ document.getElementById('imageInput').addEventListener('change', (e) => {
         };
         reader.readAsDataURL(file);
     }
+});
+
+document.getElementById('importLayoutInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const layoutData = JSON.parse(event.target.result);
+            window.loadLayoutData(layoutData);
+        } catch (err) {
+            alert("Erreur lors de l'importation du layout. Le fichier est invalide.");
+        }
+        e.target.value = ''; // Permet de réimporter le même fichier
+    };
+    reader.readAsText(file);
 });
 
 document.getElementById('drawFieldBtn').addEventListener('click', () => {
@@ -197,13 +312,19 @@ function updateUI() {
     
     const uniqueShooters = isStrategyMode ? shooters.filter((s, i, a) => a.findIndex(t => t.playerNum === s.playerNum) === i) : shooters;
 
+    const iconEye = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+    const iconEyeOff = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
+
     uniqueShooters.forEach((s) => {
         const div = document.createElement('div'); div.className = 'shooter-item';
         div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; align-items:center; gap:10px; opacity:${s.active ? 1 : 0.4}">
                 <span style="color:${s.color.replace('0.3', '1')}; font-weight:bold;">●</span>
                 <span>Joueur ${s.playerNum}</span>
             </div>
+            <button onclick="toggleShooter(${s.id})" style="background:none; border:none; cursor:pointer; color: ${s.active ? '#94a3b8' : '#475569'}; display:flex; align-items:center; justify-content:center; padding:4px; transition:0.2s;" title="Afficher/Masquer" onmouseover="this.style.color='#38bdf8'" onmouseout="this.style.color='${s.active ? '#94a3b8' : '#475569'}'">
+                ${s.active ? iconEye : iconEyeOff}
+            </button>
         `;
         list.appendChild(div);
     });
@@ -239,7 +360,11 @@ canvas.addEventListener('mousedown', (e) => {
                 if (shooterIndex !== -1) shooters.splice(shooterIndex, 1);
             } else {
                 if (shooters.length < 5) {
-                    shooters.push({ id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam, color: SHOOTER_COLORS[shooters.length % SHOOTER_COLORS.length], active: true, playerNum: shooters.length + 1 });
+                    let newPlayerNum = 1;
+                    while (shooters.some(s => s.playerNum === newPlayerNum)) {
+                        newPlayerNum++;
+                    }
+                    shooters.push({ id: Date.now(), x: pos.x, y: pos.y, stance: shooterStance, team: shooterTeam, color: SHOOTER_COLORS[(newPlayerNum - 1) % SHOOTER_COLORS.length], active: true, playerNum: newPlayerNum });
                 } else { alert("Tu ne peux placer que 5 joueurs max !"); }
             }
             calculateSightlines(); 
@@ -393,6 +518,8 @@ function calculateSightlines() {
     shooters.forEach(shooter => {
         // En mode stratégie, on ne calcule les brouillons QUE pour la DERNIÈRE position du joueur actuel !
         if (isStrategyMode && shooter.id !== latestShooterId) return;
+
+        if (!shooter.active) return; // NOUVEAU: on ignore les joueurs cachés
 
         for (let angle = 0; angle < 360; angle += 1) {
             const rad = angle * Math.PI / 180; const step = 4;

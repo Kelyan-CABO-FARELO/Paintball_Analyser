@@ -35,7 +35,12 @@
                         <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')">🗺️ Stratégie Pro</div>
                     </div>
 
-                    <input type="file" id="imageInput" accept="image/*" class="file-input">
+                    <input type="file" id="imageInput" accept="image/*" class="file-input" style="margin-bottom: 5px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="loadLayoutLocal()">📂 Charger le layout sauvegardé</button>
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="document.getElementById('importLayoutInput').click()">📁 Importer un fichier</button>
+                        <input type="file" id="importLayoutInput" accept=".json" style="display:none">
+                    </div>
                     <button id="drawFieldBtn" class="btn btn-secondary">📏 Tracer les limites du terrain</button>
                     <p id="detectionStatus" class="status-text">En attente d'image...</p>
                     
@@ -63,6 +68,11 @@
                         <label>Dimensions : <span id="sizeValue" style="color:#38bdf8; font-weight:bold;">Taille: 25 | Angle: 0°</span></label>
                         <input type="range" id="sizeSlider" min="15" max="50" value="25">
                         <p class="help-text">Molette = Taille | Shift+Molette = Angle</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="saveLayoutLocal()">💾 Sauvegarder Layout (Local)</button>
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="exportLayout()">📤 Exporter (Fichier)</button>
                     </div>
 
                     <div class="step-actions">
