@@ -38,11 +38,11 @@ const SHOOTER_COLORS = ['rgba(255,0,0,0.3)', 'rgba(0,0,255,0.3)', 'rgba(255,165,
 const OBSTACLE_CONFIG = {
     snake:  { height: 'low',    color: 'rgba(101, 67, 33, 0.7)',  shape: 'rect',     w: 4,   h: 0.8 },
     dorito: { height: 'high', color: 'rgba(139, 69, 19, 0.7)',  shape: 'triangle', w: 2,   h: 2   },
-    can:    { height: 'medium', color: 'rgba(160, 82, 45, 0.7)',  shape: 'circle',   w: 1.5, h: 1.5 },
+    can:    { height: 'high', color: 'rgba(160, 82, 45, 0.7)',  shape: 'circle',   w: 1.5, h: 1.5 },
     brick:  { height: 'medium', color: 'rgba(178, 34, 34, 0.7)',  shape: 'rect',     w: 2,   h: 1   },
     temple: { height: 'high',   color: 'rgba(120, 60, 30, 0.7)',  shape: 'rect',     w: 3,   h: 1.5   },
     goat:   { height: 'low',    color: 'rgba(245, 222, 179, 0.7)',shape: 'rect',     w: 1.5, h: 1.5 },
-    totem:  { height: 'high',   color: 'rgba(105, 105, 105, 0.7)',shape: 'circle',   w: 1,   h: 1   },
+    totem:  { height: 'high',   color: 'rgba(105, 105, 105, 0.7)',shape: 'rect',   w: 1,   h: 1   },
     x:      { height: 'medium', color: 'rgba(139, 69, 19, 0.7)',  shape: 'polygon', w: 2, h: 2, vertices: [{x: -1, y: -1}, {x: -0.4, y: -1}, {x: 0, y: -0.3}, {x: 0.4, y: -1}, {x: 1, y: -1}, {x: 0.3, y: 0}, {x: 1, y: 1}, {x: 0.4, y: 1}, {x: 0, y: 0.3}, {x: -0.4, y: 1}, {x: -1, y: 1}, {x: -0.3, y: 0}] }
 };
 
@@ -75,6 +75,17 @@ window.nextStrategyPlayer = function() {
     } else {
         goToStep(4); 
     }
+};
+
+window.selectStrategyPlayer = function(num) {
+    if (!isStrategyMode) return;
+    currentStrategyPlayer = num;
+    document.getElementById('currentPlayerNum').textContent = currentStrategyPlayer;
+    document.getElementById('btnNextPlayerNum').textContent = currentStrategyPlayer;
+    setTool('place'); 
+    calculateSightlines();
+    updateUI(); 
+    drawCanvas();
 };
 
 window.goToStep = function(step) {
@@ -132,13 +143,24 @@ window.exportPlan = function() {
 };
 
 window.toggleShooter = function(id) {
-    const shooter = shooters.find(s => s.id === id);
-    if (shooter) {
-        shooter.active = !shooter.active;
-        calculateSightlines();
-        updateUI();
-        drawCanvas();
+    const targetShooter = shooters.find(s => s.id === id);
+    if (!targetShooter) return;
+    
+    const newActiveState = !targetShooter.active;
+    
+    if (isStrategyMode) {
+        shooters.forEach(s => {
+            if (s.playerNum === targetShooter.playerNum) {
+                s.active = newActiveState;
+            }
+        });
+    } else {
+        targetShooter.active = newActiveState;
     }
+    
+    calculateSightlines();
+    updateUI();
+    drawCanvas();
 };
 
 // ========================================
@@ -316,7 +338,24 @@ function updateUI() {
     const iconEyeOff = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>`;
 
     uniqueShooters.forEach((s) => {
-        const div = document.createElement('div'); div.className = 'shooter-item';
+        const isSelected = isStrategyMode && s.playerNum === currentStrategyPlayer;
+        const div = document.createElement('div'); 
+        div.className = 'shooter-item';
+        
+        if (isSelected) {
+            div.style.borderColor = '#38bdf8';
+            div.style.backgroundColor = 'rgba(56, 189, 248, 0.1)';
+        }
+        
+        if (isStrategyMode) {
+            div.style.cursor = 'pointer';
+            div.title = "Cliquer pour modifier ce joueur";
+            div.onclick = (e) => {
+                if (e.target.closest('button')) return;
+                selectStrategyPlayer(s.playerNum);
+            };
+        }
+
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px; opacity:${s.active ? 1 : 0.4}">
                 <span style="color:${s.color.replace('0.3', '1')}; font-weight:bold;">●</span>
@@ -370,14 +409,30 @@ canvas.addEventListener('mousedown', (e) => {
             calculateSightlines(); 
         } 
         else {
-            if (e.ctrlKey) {
-                const arrowIndex = arrows.findIndex(a => pointToLineDistance(pos.x, pos.y, a.x1, a.y1, a.x2, a.y2) < 10);
+            if (e.ctrlKey || e.metaKey) {
+                let arrowIndex = -1; let minArrowDist = 10;
+                for (let i = arrows.length - 1; i >= 0; i--) {
+                    if (arrows[i].playerNum !== currentStrategyPlayer) continue;
+                    const dist = pointToLineDistance(pos.x, pos.y, arrows[i].x1, arrows[i].y1, arrows[i].x2, arrows[i].y2);
+                    if (dist < minArrowDist) { minArrowDist = dist; arrowIndex = i; }
+                }
                 if (arrowIndex !== -1) { arrows.splice(arrowIndex, 1); updateUI(); drawCanvas(); return; }
 
-                const lineIndex = lockedLines.findIndex(l => pointToLineDistance(pos.x, pos.y, l.x1, l.y1, l.x2, l.y2) < 8);
-                if (lineIndex !== -1) { lockedLines.splice(lineIndex, 1); updateUI(); drawCanvas(); return; }
+                let lineIndex = -1; let minLineDist = 8;
+                for (let i = lockedLines.length - 1; i >= 0; i--) {
+                    const s = shooters.find(sh => sh.id === lockedLines[i].shooterId);
+                    if (s && s.playerNum !== currentStrategyPlayer) continue;
+                    const dist = pointToLineDistance(pos.x, pos.y, lockedLines[i].x1, lockedLines[i].y1, lockedLines[i].x2, lockedLines[i].y2);
+                    if (dist < minLineDist) { minLineDist = dist; lineIndex = i; }
+                }
+                if (lineIndex !== -1) { lockedLines.splice(lineIndex, 1); calculateSightlines(); updateUI(); drawCanvas(); return; }
 
-                const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
+                let shooterIndex = -1; let minShooterDist = 15;
+                for (let i = shooters.length - 1; i >= 0; i--) {
+                    if (shooters[i].playerNum !== currentStrategyPlayer) continue;
+                    const dist = Math.hypot(shooters[i].x - pos.x, shooters[i].y - pos.y);
+                    if (dist < minShooterDist) { minShooterDist = dist; shooterIndex = i; }
+                }
                 if (shooterIndex !== -1) shooters.splice(shooterIndex, 1);
                 calculateSightlines();
             } else {
@@ -386,15 +441,28 @@ canvas.addEventListener('mousedown', (e) => {
                     calculateSightlines();
                 } 
                 else if (currentStrategyTool === 'select') {
-                    let clickedPreviewIndex = -1; let minDistance = 8;
-                    for (let i = previewLines.length - 1; i >= 0; i--) {
-                        const dist = pointToLineDistance(pos.x, pos.y, previewLines[i].x1, previewLines[i].y1, previewLines[i].x2, previewLines[i].y2);
-                        if (dist < minDistance) { minDistance = dist; clickedPreviewIndex = i; }
+                    let clickedLockedIndex = -1; let minLockedDistance = 8;
+                    for (let i = lockedLines.length - 1; i >= 0; i--) {
+                        const s = shooters.find(sh => sh.id === lockedLines[i].shooterId);
+                        if (s && s.playerNum !== currentStrategyPlayer) continue;
+                        
+                        const dist = pointToLineDistance(pos.x, pos.y, lockedLines[i].x1, lockedLines[i].y1, lockedLines[i].x2, lockedLines[i].y2);
+                        if (dist < minLockedDistance) { minLockedDistance = dist; clickedLockedIndex = i; }
                     }
-                    if (clickedPreviewIndex !== -1) { 
-                        lockedLines.push(previewLines.splice(clickedPreviewIndex, 1)[0]); 
+                    if (clickedLockedIndex !== -1) {
+                        lockedLines.splice(clickedLockedIndex, 1);
+                        calculateSightlines();
+                    } else {
+                        let clickedPreviewIndex = -1; let minDistance = 8;
+                        for (let i = previewLines.length - 1; i >= 0; i--) {
+                            const dist = pointToLineDistance(pos.x, pos.y, previewLines[i].x1, previewLines[i].y1, previewLines[i].x2, previewLines[i].y2);
+                            if (dist < minDistance) { minDistance = dist; clickedPreviewIndex = i; }
+                        }
+                        if (clickedPreviewIndex !== -1) { 
+                            lockedLines.push(previewLines.splice(clickedPreviewIndex, 1)[0]); 
+                        }
                     }
-                } 
+                }
                 else if (currentStrategyTool === 'arrow') {
                     isDrawingArrow = true; arrowStartPos = pos; arrowCurrentPos = pos; return;
                 }
@@ -423,7 +491,7 @@ canvas.addEventListener('mouseup', (e) => {
     if (isDrawingArrow && arrowStartPos && arrowCurrentPos && currentStep === 3) {
         if (Math.hypot(arrowCurrentPos.x - arrowStartPos.x, arrowCurrentPos.y - arrowStartPos.y) > 10) { 
             const playerColor = SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length].replace('0.3', '1');
-            arrows.push({ x1: arrowStartPos.x, y1: arrowStartPos.y, x2: arrowCurrentPos.x, y2: arrowCurrentPos.y, color: playerColor }); 
+            arrows.push({ x1: arrowStartPos.x, y1: arrowStartPos.y, x2: arrowCurrentPos.x, y2: arrowCurrentPos.y, color: playerColor, playerNum: currentStrategyPlayer }); 
         }
         isDrawingArrow = false; arrowStartPos = null; arrowCurrentPos = null; drawCanvas();
     }
@@ -447,6 +515,9 @@ function drawCanvas() {
 
     ctx.globalAlpha = 1.0; 
     lockedLines.forEach(line => {
+        const s = shooters.find(sh => sh.id === line.shooterId);
+        const isActive = s ? s.active : true;
+        ctx.globalAlpha = isActive ? 1.0 : 0.3;
         ctx.beginPath(); ctx.moveTo(line.x1, line.y1); ctx.lineTo(line.x2, line.y2);
         if (line.isBlind) { 
             ctx.setLineDash([5, 5]); ctx.strokeStyle = line.color.replace('0.3', '0.9'); ctx.lineWidth = 2.5; 
@@ -489,7 +560,12 @@ function drawCanvas() {
         ctx.fillText(s.playerNum, s.x, s.y);
     });
 
-    arrows.forEach(a => drawArrow(ctx, a.x1, a.y1, a.x2, a.y2, a.color));
+    arrows.forEach(a => {
+        const isActive = isStrategyMode ? shooters.some(s => s.playerNum === a.playerNum && s.active) : true;
+        ctx.globalAlpha = isActive ? 1.0 : 0.3;
+        drawArrow(ctx, a.x1, a.y1, a.x2, a.y2, a.color);
+    });
+    ctx.globalAlpha = 1.0;
     
     if (isDrawingArrow && arrowStartPos && arrowCurrentPos) {
         const liveColor = SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length].replace('0.3', '1');
