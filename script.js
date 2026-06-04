@@ -19,8 +19,17 @@ let arrows = [];
 
 // Variables de mode
 let isStrategyMode = false; 
+let isBreakMode = false;
 let currentStrategyPlayer = 1; 
 let currentStrategyTool = 'place'; 
+
+let breakMyRuns = [];
+let breakOpponentRuns = [];
+let breakLanes = [];
+let currentBreakTool = 'myrun';
+let isDrawingBreakRun = false;
+let currentBreakRunPath = null;
+let currentDrawingRunType = 'myrun';
 
 let isDrawingArrow = false;
 let arrowStartPos = null;
@@ -52,8 +61,10 @@ const OBSTACLE_CONFIG = {
 window.setAppMode = function(mode) {
     document.getElementById('btn-mode-calc').classList.remove('active');
     document.getElementById('btn-mode-strat').classList.remove('active');
+    if (document.getElementById('btn-mode-break')) document.getElementById('btn-mode-break').classList.remove('active');
     document.getElementById('btn-mode-' + mode).classList.add('active');
     isStrategyMode = (mode === 'strat');
+    isBreakMode = (mode === 'break');
 };
 
 window.setTool = function(tool) {
@@ -62,6 +73,13 @@ window.setTool = function(tool) {
     document.getElementById('btn-tool-select').classList.remove('active');
     document.getElementById('btn-tool-arrow').classList.remove('active');
     document.getElementById('btn-tool-' + tool).classList.add('active');
+};
+
+window.setBreakTool = function(tool) {
+    currentBreakTool = tool;
+    document.getElementById('btn-tool-break-myrun').classList.remove('active');
+    document.getElementById('btn-tool-break-opprun').classList.remove('active');
+    document.getElementById('btn-tool-break-' + tool).classList.add('active');
 };
 
 window.nextStrategyPlayer = function() {
@@ -91,6 +109,7 @@ window.selectStrategyPlayer = function(num) {
 window.goToStep = function(step) {
     if ((step === 1 || step === 2) && currentStep >= 3) {
         shooters = []; previewLines = []; lockedLines = []; arrows = [];
+        breakMyRuns = []; breakOpponentRuns = []; breakLanes = [];
         currentStrategyPlayer = 1; 
         document.getElementById('currentPlayerNum').textContent = "1"; 
         document.getElementById('btnNextPlayerNum').textContent = "1";
@@ -111,24 +130,40 @@ window.goToStep = function(step) {
     if (step === 2 || step === 3) canvas.style.cursor = 'crosshair';
 
     if (step === 3) {
-        if (isStrategyMode) {
+        if (isBreakMode) {
+            document.getElementById('step3-title').innerHTML = '🏃 3. Analyse Break';
+            document.getElementById('step3-desc').textContent = 'Trace ta course et dessine les courses adverses.';
+            document.getElementById('posture-selector').style.display = 'none';
+            document.getElementById('strategy-tools-step3').style.display = 'none';
+            document.getElementById('break-tools-step3').style.display = 'block';
+            document.getElementById('actions-calc').style.display = 'flex';
+            document.getElementById('actions-strat').style.display = 'none';
+        } else if (isStrategyMode) {
             document.getElementById('step3-title').innerHTML = '👥 3. Planification Joueur par Joueur';
             document.getElementById('step3-desc').textContent = 'Construis le playbook. Pose le joueur, valide ses lignes, dessine sa relance.';
+            document.getElementById('posture-selector').style.display = 'block';
             document.getElementById('strategy-tools-step3').style.display = 'block';
+            document.getElementById('break-tools-step3').style.display = 'none';
             document.getElementById('actions-calc').style.display = 'none';
             document.getElementById('actions-strat').style.display = 'flex';
         } else {
             document.getElementById('step3-title').innerHTML = '👥 3. Déploiement Global';
             document.getElementById('step3-desc').textContent = 'Place tes 5 joueurs. L\'analyse est en direct.';
+            document.getElementById('posture-selector').style.display = 'block';
             document.getElementById('strategy-tools-step3').style.display = 'none';
+            document.getElementById('break-tools-step3').style.display = 'none';
             document.getElementById('actions-calc').style.display = 'flex';
             document.getElementById('actions-strat').style.display = 'none';
         }
     }
 
     if (step === 4) {
-        document.getElementById('recap-calc').style.display = isStrategyMode ? 'none' : 'block';
+        document.getElementById('recap-calc').style.display = (!isStrategyMode && !isBreakMode) ? 'block' : 'none';
         document.getElementById('recap-strat').style.display = isStrategyMode ? 'block' : 'none';
+        document.getElementById('recap-break').style.display = isBreakMode ? 'block' : 'none';
+        if (isBreakMode) {
+            document.getElementById('breakLineCount').textContent = breakLanes.length;
+        }
     }
 };
 
@@ -229,6 +264,7 @@ window.loadLayoutData = function(layoutData) {
             obstacles = layoutData.obstacles || [];
             
             shooters = []; previewLines = []; lockedLines = []; arrows = [];
+            breakMyRuns = []; breakOpponentRuns = []; breakLanes = [];
             currentStrategyPlayer = 1; 
             document.getElementById('currentPlayerNum').textContent = "1"; 
             document.getElementById('btnNextPlayerNum').textContent = "1";
@@ -320,6 +356,7 @@ canvas.addEventListener('wheel', (e) => {
 document.getElementById('resetBtn').addEventListener('click', () => {
     if(confirm("Tout effacer et recommencer à zéro ?")) {
         obstacles = []; shooters = []; previewLines = []; lockedLines = []; arrows = []; fieldBounds = null; loadedImage = null;
+        breakMyRuns = []; breakOpponentRuns = []; breakLanes = [];
         currentStrategyPlayer = 1; document.getElementById('currentPlayerNum').textContent = "1"; document.getElementById('btnNextPlayerNum').textContent = "1";
         document.getElementById('imageInput').value = ''; document.getElementById('detectionStatus').textContent = 'En attente d\'image...';
         goToStep(1); updateUI(); drawCanvas();
@@ -393,7 +430,33 @@ canvas.addEventListener('mousedown', (e) => {
     }
 
     if (currentStep === 3) {
-        if (!isStrategyMode) {
+        if (isBreakMode) {
+            if (e.ctrlKey || e.metaKey) {
+                let runIndex = -1; let minDist = 15; let isOppRun = false;
+                for (let i = breakOpponentRuns.length - 1; i >= 0; i--) {
+                    for (let p of breakOpponentRuns[i]) {
+                        if (Math.hypot(p.x - pos.x, p.y - pos.y) < minDist) { minDist = Math.hypot(p.x - pos.x, p.y - pos.y); runIndex = i; isOppRun = true; }
+                    }
+                }
+                for (let i = breakMyRuns.length - 1; i >= 0; i--) {
+                    for (let p of breakMyRuns[i]) {
+                        if (Math.hypot(p.x - pos.x, p.y - pos.y) < minDist) { minDist = Math.hypot(p.x - pos.x, p.y - pos.y); runIndex = i; isOppRun = false; }
+                    }
+                }
+
+                if (runIndex !== -1) { 
+                    if (isOppRun) breakOpponentRuns.splice(runIndex, 1);
+                    else breakMyRuns.splice(runIndex, 1);
+                    window.calculateBreakLanes(); updateUI(); drawCanvas(); return; 
+                }
+            } else {
+                isDrawingBreakRun = true; 
+                currentBreakRunPath = [{x: pos.x, y: pos.y}];
+                currentDrawingRunType = currentBreakTool;
+                return;
+            }
+        }
+        else if (!isStrategyMode) {
             if (e.ctrlKey || e.metaKey) {
                 const shooterIndex = shooters.findIndex(s => Math.hypot(s.x - pos.x, s.y - pos.y) < 15);
                 if (shooterIndex !== -1) shooters.splice(shooterIndex, 1);
@@ -480,6 +543,14 @@ canvas.addEventListener('mousemove', (e) => {
         ctx.strokeRect(fieldStartPos.x, fieldStartPos.y, pos.x - fieldStartPos.x, pos.y - fieldStartPos.y); ctx.setLineDash([]);
     }
     if (isDrawingArrow && arrowStartPos && currentStep === 3) { arrowCurrentPos = getMousePos(e); drawCanvas(); }
+    if (isDrawingBreakRun && currentBreakRunPath && currentStep === 3) { 
+        const lastP = currentBreakRunPath[currentBreakRunPath.length - 1];
+        const newP = getMousePos(e);
+        if (Math.hypot(newP.x - lastP.x, newP.y - lastP.y) > 5) {
+            currentBreakRunPath.push(newP); 
+            drawCanvas(); 
+        }
+    }
 });
 
 canvas.addEventListener('mouseup', (e) => {
@@ -494,6 +565,17 @@ canvas.addEventListener('mouseup', (e) => {
             arrows.push({ x1: arrowStartPos.x, y1: arrowStartPos.y, x2: arrowCurrentPos.x, y2: arrowCurrentPos.y, color: playerColor, playerNum: currentStrategyPlayer }); 
         }
         isDrawingArrow = false; arrowStartPos = null; arrowCurrentPos = null; drawCanvas();
+    }
+    if (isDrawingBreakRun && currentBreakRunPath && currentStep === 3) {
+        if (currentBreakRunPath.length > 3) { 
+            if (currentDrawingRunType === 'myrun') {
+                breakMyRuns.push(currentBreakRunPath); 
+            } else {
+                breakOpponentRuns.push(currentBreakRunPath); 
+            }
+            window.calculateBreakLanes();
+        }
+        isDrawingBreakRun = false; currentBreakRunPath = null; drawCanvas();
     }
 });
 
@@ -571,11 +653,237 @@ function drawCanvas() {
         const liveColor = SHOOTER_COLORS[(currentStrategyPlayer-1) % SHOOTER_COLORS.length].replace('0.3', '1');
         drawArrow(ctx, arrowStartPos.x, arrowStartPos.y, arrowCurrentPos.x, arrowCurrentPos.y, liveColor);
     }
+
+    if (isBreakMode) {
+        ctx.globalAlpha = 1.0;
+        
+        function drawPath(ctx, path, color) {
+            if (!path || path.length < 2) return;
+            ctx.beginPath();
+            ctx.moveTo(path[0].x, path[0].y);
+            for (let i = 1; i < path.length; i++) {
+                ctx.lineTo(path[i].x, path[i].y);
+            }
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 8]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Draw arrowhead at the end
+            const p1 = path[path.length - 2];
+            const p2 = path[path.length - 1];
+            const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+            ctx.beginPath();
+            ctx.moveTo(p2.x, p2.y);
+            ctx.lineTo(p2.x - 10 * Math.cos(angle - Math.PI / 6), p2.y - 10 * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(p2.x - 10 * Math.cos(angle + Math.PI / 6), p2.y - 10 * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+
+        breakMyRuns.forEach(run => drawPath(ctx, run, '#3b82f6'));
+        breakOpponentRuns.forEach(run => drawPath(ctx, run, '#ef4444'));
+        
+        if (isDrawingBreakRun && currentBreakRunPath) {
+            const drawCol = currentDrawingRunType === 'myrun' ? '#3b82f6' : '#ef4444';
+            drawPath(ctx, currentBreakRunPath, drawCol);
+        }
+
+        breakLanes.forEach(lane => {
+            ctx.beginPath();
+            lane.allPairs.forEach((pair, index) => {
+                if (index % 3 === 0) { 
+                    ctx.moveTo(pair.myPoint.x, pair.myPoint.y);
+                    ctx.lineTo(pair.oppPoint.x, pair.oppPoint.y);
+                }
+            });
+            ctx.strokeStyle = 'rgba(34, 197, 94, 0.15)'; 
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(lane.myPoint.x, lane.myPoint.y);
+            ctx.lineTo(lane.oppPoint.x, lane.oppPoint.y);
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(lane.oppPoint.x, lane.oppPoint.y, 8, 0, Math.PI * 2);
+            ctx.moveTo(lane.oppPoint.x - 12, lane.oppPoint.y); ctx.lineTo(lane.oppPoint.x + 12, lane.oppPoint.y);
+            ctx.moveTo(lane.oppPoint.x, lane.oppPoint.y - 12); ctx.lineTo(lane.oppPoint.x, lane.oppPoint.y + 12);
+            ctx.strokeStyle = '#ef4444'; 
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(lane.myPoint.x, lane.myPoint.y, 6, 0, Math.PI * 2);
+            ctx.fillStyle = '#3b82f6';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = '#22c55e';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText("TIR", lane.myPoint.x, lane.myPoint.y - 12);
+            ctx.fillText("CIBLE", lane.oppPoint.x, lane.oppPoint.y - 12);
+        });
+    }
 }
 
 // ========================================
 // MOTEUR BALISTIQUE & CALCULS MATHS
 // ========================================
+
+function getPathLength(path) {
+    let len = 0;
+    for (let i = 1; i < path.length; i++) {
+        len += Math.hypot(path[i].x - path[i-1].x, path[i].y - path[i-1].y);
+    }
+    return len;
+}
+
+function getPointOnPath(path, totalLen, t) {
+    if (!path || path.length === 0) return {x:0, y:0};
+    if (path.length === 1 || t <= 0) return path[0];
+    if (t >= 1) return path[path.length - 1];
+    
+    let targetD = t * totalLen;
+    let currD = 0;
+    for (let i = 1; i < path.length; i++) {
+        const d = Math.hypot(path[i].x - path[i-1].x, path[i].y - path[i-1].y);
+        if (currD + d >= targetD) {
+            const localT = d === 0 ? 0 : (targetD - currD) / d;
+            return {
+                x: path[i-1].x + (path[i].x - path[i-1].x) * localT,
+                y: path[i-1].y + (path[i].y - path[i-1].y) * localT
+            };
+        }
+        currD += d;
+    }
+    return path[path.length - 1];
+}
+
+window.calculateBreakLanes = function() {
+    breakLanes = []; 
+    if (breakMyRuns.length === 0 || breakOpponentRuns.length === 0) return;
+
+    breakMyRuns.forEach(myRun => {
+        const myLen = getPathLength(myRun);
+        const mySteps = Math.max(1, Math.floor(myLen / 5));
+
+        breakOpponentRuns.forEach(oppRun => {
+            const oppLen = getPathLength(oppRun);
+            const oppSteps = Math.max(1, Math.floor(oppLen / 5));
+
+            let validPairs = [];
+
+            for (let i = 0; i <= mySteps; i++) {
+                const mt = i / mySteps;
+                const myPt = getPointOnPath(myRun, myLen, mt);
+                const mx = myPt.x; const my = myPt.y;
+                
+                // On ne tire pas dans l'instant 0 de notre départ
+                if (Math.hypot(mx - myRun[0].x, my - myRun[0].y) < 10) continue;
+
+                for (let j = 0; j <= oppSteps; j++) {
+                    const ot = j / oppSteps;
+                    const oppPt = getPointOnPath(oppRun, oppLen, ot);
+                    const ox = oppPt.x; const oy = oppPt.y;
+
+                    // Périmètre de sécurité : trop tôt pour le toucher (ex: 30 pixels du départ)
+                    if (Math.hypot(ox - oppRun[0].x, oy - oppRun[0].y) < 30) continue;
+
+                    let hasCollision = false;
+                    const rayDx = ox - mx;
+                    const rayDy = oy - my;
+                    const rayLen = Math.hypot(rayDx, rayDy);
+                    const raySteps = Math.max(1, Math.ceil(rayLen / 4));
+                    
+                    for (let k = 1; k < raySteps; k++) {
+                        const rt = k / raySteps;
+                        const rx = mx + rayDx * rt;
+                        const ry = my + rayDy * rt;
+                        
+                        for (let obs of obstacles) {
+                            // En Break (course), les joueurs sont DEBOUT.
+                            // Ils peuvent donc tirer par-dessus les obstacles BAS et MOYENS.
+                            if (obs.height === 'low' || obs.height === 'medium') continue;
+
+                            let collision = false;
+                            const config = OBSTACLE_CONFIG[obs.type];
+                            const w = obs.size * config.w; const h = obs.size * config.h;
+                            
+                            if (config.shape === 'circle') { 
+                                collision = (Math.hypot(rx - obs.x, ry - obs.y) <= w/2); 
+                            } else {
+                                const odx = rx - obs.x; const ody = ry - obs.y; const angleRad = -obs.rotation * Math.PI / 180;
+                                const localX = odx * Math.cos(angleRad) - ody * Math.sin(angleRad); const localY = odx * Math.sin(angleRad) + ody * Math.cos(angleRad);
+                                if (config.shape === 'rect') { collision = (Math.abs(localX) <= w/2 && Math.abs(localY) <= h/2); } 
+                                else if (config.shape === 'triangle') { if (localY >= -h/2 && localY <= h/2) collision = Math.abs(localX) <= ((w/2) * ((localY + h/2) / h)); } 
+                                else if (config.shape === 'polygon') {
+                                    const normX = localX / (w/2); const normY = localY / (h/2); let inside = false;
+                                    for (let n = 0, l = config.vertices.length - 1; n < config.vertices.length; l = n++) {
+                                        if (((config.vertices[n].y > normY) !== (config.vertices[l].y > normY)) && (normX < (config.vertices[l].x - config.vertices[n].x) * (normY - config.vertices[n].y) / (config.vertices[l].y - config.vertices[n].y) + config.vertices[n].x)) inside = !inside;
+                                    }
+                                    collision = inside;
+                                }
+                            }
+                            if (collision) { hasCollision = true; break; }
+                        }
+                        if (hasCollision) break;
+                    }
+                    if (!hasCollision) {
+                        validPairs.push({ myPoint: {x: mx, y: my}, oppPoint: {x: ox, y: oy} });
+                    }
+                }
+            }
+
+            if (validPairs.length > 0) {
+                let clusters = [];
+                for (let pair of validPairs) {
+                    let foundCluster = null;
+                    for (let c of clusters) {
+                        // On vérifie le dernier élément ajouté au cluster pour des raisons de performance, 
+                        // c'est généralement suffisant car les paires sont générées dans un ordre relativement séquentiel.
+                        // Pour être parfaitement sûr de lier des zones continues, on peut vérifier tous les éléments,
+                        // mais vu la taille de validPairs, vérifier juste quelques-uns suffit.
+                        for (let cpair of c) {
+                            const distMy = Math.hypot(pair.myPoint.x - cpair.myPoint.x, pair.myPoint.y - cpair.myPoint.y);
+                            const distOpp = Math.hypot(pair.oppPoint.x - cpair.oppPoint.x, pair.oppPoint.y - cpair.oppPoint.y);
+                            // Si la paire est proche d'un cluster existant (< 20px d'écart)
+                            if (distMy < 20 && distOpp < 20) {
+                                foundCluster = c; break;
+                            }
+                        }
+                        if (foundCluster) break;
+                    }
+                    if (foundCluster) foundCluster.push(pair);
+                    else clusters.push([pair]);
+                }
+                
+                // Pour chaque fenêtre de tir (cluster) trouvée
+                clusters.forEach(c => {
+                    if (c.length > 2) { // On ignore les micro-trous d'1 pixel
+                        const middle = c[Math.floor(c.length / 2)];
+                        breakLanes.push({
+                            myPoint: middle.myPoint,
+                            oppPoint: middle.oppPoint,
+                            firstPair: c[0],
+                            lastPair: c[c.length - 1],
+                            allPairs: c
+                        });
+                    }
+                });
+            }
+        });
+    });
+    if (currentStep === 4) document.getElementById('breakLineCount').textContent = breakLanes.length;
+};
+
 function calculateSightlines() {
     previewLines = []; 
     const minX = fieldBounds ? fieldBounds.x : 0; const maxX = fieldBounds ? fieldBounds.x + fieldBounds.w : canvas.width;

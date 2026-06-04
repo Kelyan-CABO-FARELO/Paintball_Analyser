@@ -33,6 +33,7 @@
                     <div class="mode-switch" style="margin-bottom: 20px;">
                         <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')">🧮 Live (Rapide)</div>
                         <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')">🗺️ Stratégie Pro</div>
+                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')">🏃 Assistant Break</div>
                     </div>
 
                     <input type="file" id="imageInput" accept="image/*" class="file-input" style="margin-bottom: 5px;">
@@ -85,7 +86,7 @@
                     <h3 id="step3-title">👥 3. Déploiement</h3>
                     <p class="help-text" id="step3-desc">Place tes joueurs. L'analyse est en direct.</p>
 
-                    <div class="tool-group">
+                    <div class="tool-group" id="posture-selector">
                         <label>Posture du tireur</label>
                         <div class="stance-selector">
                             <div class="stance-btn active" data-stance="standing">🧍 Debout</div>
@@ -100,6 +101,14 @@
                             <div class="stance-btn active" id="btn-tool-place" onclick="setTool('place')">🧍 Placer</div>
                             <div class="stance-btn" id="btn-tool-select" onclick="setTool('select')">🖱️ Lignes</div>
                             <div class="stance-btn" id="btn-tool-arrow" onclick="setTool('arrow')">↗️ Course</div>
+                        </div>
+                    </div>
+
+                    <div id="break-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#22c55e;">Analyse du Break</label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" id="btn-tool-break-myrun" onclick="setBreakTool('myrun')">🔵 Notre Course</div>
+                            <div class="stance-btn" id="btn-tool-break-opprun" onclick="setBreakTool('opprun')">🔴 Course Adverse</div>
                         </div>
                     </div>
 
@@ -133,6 +142,13 @@
                                 <em>La messagerie en direct arrivera dans la prochaine mise à jour BDD.</em>
                             </div>
                             <input type="text" placeholder="Écrire un message..." disabled style="width:100%; padding:8px; margin-top:10px; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#64748b;">
+                        </div>
+                    </div>
+
+                    <div id="recap-break" style="display: none;">
+                        <p class="help-text">Analyse d'interception validée.</p>
+                        <div class="stats-box" style="border-left-color: #22c55e;">
+                            <p>Fenêtres de tir : <strong id="breakLineCount">0</strong></p>
                         </div>
                     </div>
 
