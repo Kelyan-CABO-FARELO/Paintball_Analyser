@@ -6,7 +6,7 @@ body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; he
 #app { display: flex; flex-direction: column; height: 100vh; }
 
 /* TOPBAR */
-.topbar { background: #1e293b; padding: 0 20px; height: 70px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+.topbar { background: #1e293b; padding: 0 20px; height: 70px; display: flex; justify-content: center; align-items: center; border-bottom: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: relative; }
 .logo { font-weight: 800; font-size: 1.2rem; color: #e2e8f0; display: flex; align-items: center; gap: 10px; }
 .badge { background: #38bdf8; color: #0f172a; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; }
 

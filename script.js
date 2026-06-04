@@ -995,24 +995,32 @@ function drawArrow(ctx, fromx, fromy, tox, toy, color) {
 // ========================================
 const tutorialSteps = [
     {
-        title: "🦑 Bienvenue sur Paintball Analyser !",
-        text: "Cet outil te permet de préparer tes layouts et stratégies. Il y a deux modes : <br><br><b>🧮 Live (Rapide)</b> : Pour analyser des lignes de tir globales en direct.<br><b>🗺️ Stratégie Pro</b> : Pour construire un playbook joueur par joueur."
+        title: "Bienvenue sur Paintball Analyser !",
+        text: "Cet outil complet te permet de simuler la balistique et de préparer tes tournois. L'application possède 3 modes distincts :<br><br>• <b>🧮 Live (Rapide)</b> : Simulation directe avec 5 joueurs qu'on déplace librement.<br>• <b>🗺️ Stratégie Pro</b> : Éditeur avancé étape par étape pour construire un playbook complet.<br>• <b>🏃 Assistant Break</b> : Analyse dynamique des tirs d'interception pendant les courses."
     },
     {
-        title: "⚙️ 1. Paramètres",
-        text: "Commence par choisir ton mode, puis charge une image du terrain (le layout).<br><br>Ensuite, clique sur <b>Tracer les limites</b> et dessine un rectangle avec ta souris englobant l'aire de jeu sur l'image."
+        title: "⚙️ 1. Le Terrain & Les Limites",
+        text: "Deux options s'offrent à toi :<br><br>• <b>Continuer</b> : Clique sur <i>Charger le layout</i> (sauvegarde auto du dernier layout sauvegarder) ou <i>Importer un fichier</i> (.json) pour reprendre un terrain déjà construit.<br>• <b>Nouveau</b> : Charge une image. <b>TRÈS IMPORTANT</b> : Clique ensuite sur <i>Tracer les limites</i> et encadre l'aire de jeu pour définir l'échelle 3D."
     },
     {
-        title: "🚧 2. Modules",
-        text: "Sélectionne un obstacle et clique sur le terrain pour le poser.<br><br><b>Astuces :</b><br>• Utilise la <b>molette</b> de la souris pour changer la taille<br>• <b>Shift + Molette</b> pour pivoter l'obstacle<br>• <b>Ctrl + Clic</b> pour supprimer un obstacle."
+        title: "🚧 2. Poser & Sauvegarder les Modules",
+        text: "Clique sur un module (Snake, Dorito, X...) pour le poser.<br>• <b>Molette</b> : Ajuster la taille (détermine si on tire par-dessus).<br>• <b>Shift + Molette</b> : Faire pivoter.<br>• <b>Ctrl + Clic</b> : Supprimer.<br><br>💡 <b>Astuce</b> : Utilise <i>Sauvegarder / Exporter Layout</i> pour ne pas avoir à replacer les modules à chaque fois que tu ouvres l'appli !"
     },
     {
-        title: "👥 3. Déploiement",
-        text: "Place tes joueurs (maximum 5). Leurs lignes de tir s'afficheront automatiquement selon leur posture (debout, genou, couché).<br><br>En mode <b>Stratégie Pro</b>, tu peux valider une ligne intéressante en cliquant dessus, ou dessiner des parcours de course avec l'outil ↗️ Course."
+        title: "🧮 3a. Mode Live",
+        text: "Place jusqu'à 5 joueurs et déplace-les à la souris. Le moteur 3D calcule instantanément qui voit qui ! Clique sur l'icône 👁️ dans la liste pour masquer temporairement un joueur de la carte.<br><br><b>La Posture (Debout, Genou, Couché) est essentielle</b> : Un joueur debout tirera par-dessus un obstacle 'Moyen' (comme le W ou le X), mais la vue d'un joueur allongé sera bloquée."
     },
     {
-        title: "✅ 4. Plan de Jeu",
-        text: "Une fois ton plan terminé, tu peux exporter le résultat en image pour le partager avec ton équipe.<br><br>Prêt à élaborer les meilleures tactiques ? 🔫"
+        title: "🗺️ 3b. Mode Stratégie Pro",
+        text: "Ce mode est conçu pour planifier avec précision.<br>1. Clique pour <b>Placer</b> un joueur.<br>2. Dessine sa <b>Course de relance</b> (l'outil ↗️).<br>3. Clique sur <b>Valider Joueur</b> pour le figer.<br><br>Tu peux revenir en arrière pour <b>Modifier</b> un joueur via la liste, ou cliquer sur l'icône 👁️ pour masquer temporairement un joueur de la carte."
+    },
+    {
+        title: "🏃 3c. Assistant Break",
+        text: "Outil exclusif pour les 6 premières secondes de jeu.<br><br>Sélectionne l'outil <b>🔵 Notre Course</b>. Sur le terrain, clique et dessine <i>à main levée</i> ta vraie trajectoire. Fais de même pour la <b>🔴 Course Adverse</b>.<br>Le logiciel analysera le timing exact et placera un viseur 🎯 là où vos lignes de vue se croisent (en ignorant les modules bas et moyens)."
+    },
+    {
+        title: "✅ 4. Export & Remise à Zéro",
+        text: "Une fois ta tactique terminée, clique sur <b>Exporter le Plan</b> pour télécharger une image HD de ta stratégie à partager avec ton équipe.<br><br>Pour tout recommencer de zéro, utilise le bouton <b>🗑️ Reset Total</b> en haut à droite de l'écran."
     }
 ];
 
@@ -1021,6 +1029,14 @@ let currentTutStep = 0;
 function updateTutorial() {
     document.getElementById('tut-title').innerHTML = tutorialSteps[currentTutStep].title;
     document.getElementById('tut-body').innerHTML = `<p>${tutorialSteps[currentTutStep].text}</p>`;
+    
+    const progressContainer = document.querySelector('.tut-progress');
+    progressContainer.innerHTML = '';
+    for(let i = 0; i < tutorialSteps.length; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === currentTutStep ? ' active' : '');
+        progressContainer.appendChild(dot);
+    }
     
     document.getElementById('tut-prev').style.display = currentTutStep === 0 ? 'none' : 'block';
     
