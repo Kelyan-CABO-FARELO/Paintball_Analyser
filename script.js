@@ -20,6 +20,7 @@ let arrows = [];
 // Variables de mode
 let isStrategyMode = false; 
 let isBreakMode = false;
+let isAiMode = false;
 let currentStrategyPlayer = 1; 
 let currentStrategyTool = 'place'; 
 
@@ -62,9 +63,11 @@ window.setAppMode = function(mode) {
     document.getElementById('btn-mode-calc').classList.remove('active');
     document.getElementById('btn-mode-strat').classList.remove('active');
     if (document.getElementById('btn-mode-break')) document.getElementById('btn-mode-break').classList.remove('active');
+    if (document.getElementById('btn-mode-ai')) document.getElementById('btn-mode-ai').classList.remove('active');
     document.getElementById('btn-mode-' + mode).classList.add('active');
     isStrategyMode = (mode === 'strat');
     isBreakMode = (mode === 'break');
+    isAiMode = (mode === 'ai');
 };
 
 window.setTool = function(tool) {
@@ -136,31 +139,48 @@ window.goToStep = function(step) {
             document.getElementById('posture-selector').style.display = 'none';
             document.getElementById('strategy-tools-step3').style.display = 'none';
             document.getElementById('break-tools-step3').style.display = 'block';
+            if(document.getElementById('ai-tools-step3')) document.getElementById('ai-tools-step3').style.display = 'none';
             document.getElementById('actions-calc').style.display = 'flex';
             document.getElementById('actions-strat').style.display = 'none';
+            if(document.getElementById('actions-ai')) document.getElementById('actions-ai').style.display = 'none';
+        } else if (isAiMode) {
+            document.getElementById('step3-title').innerHTML = '🤖 3. IA Auto';
+            document.getElementById('step3-desc').textContent = 'Génère une stratégie automatiquement.';
+            document.getElementById('posture-selector').style.display = 'none';
+            document.getElementById('strategy-tools-step3').style.display = 'none';
+            document.getElementById('break-tools-step3').style.display = 'none';
+            if(document.getElementById('ai-tools-step3')) document.getElementById('ai-tools-step3').style.display = 'block';
+            document.getElementById('actions-calc').style.display = 'none';
+            document.getElementById('actions-strat').style.display = 'none';
+            if(document.getElementById('actions-ai')) document.getElementById('actions-ai').style.display = 'flex';
         } else if (isStrategyMode) {
             document.getElementById('step3-title').innerHTML = '👥 3. Planification Joueur par Joueur';
             document.getElementById('step3-desc').textContent = 'Construis le playbook. Pose le joueur, valide ses lignes, dessine sa relance.';
             document.getElementById('posture-selector').style.display = 'block';
             document.getElementById('strategy-tools-step3').style.display = 'block';
             document.getElementById('break-tools-step3').style.display = 'none';
+            if(document.getElementById('ai-tools-step3')) document.getElementById('ai-tools-step3').style.display = 'none';
             document.getElementById('actions-calc').style.display = 'none';
             document.getElementById('actions-strat').style.display = 'flex';
+            if(document.getElementById('actions-ai')) document.getElementById('actions-ai').style.display = 'none';
         } else {
             document.getElementById('step3-title').innerHTML = '👥 3. Déploiement Global';
             document.getElementById('step3-desc').textContent = 'Place tes 5 joueurs. L\'analyse est en direct.';
             document.getElementById('posture-selector').style.display = 'block';
             document.getElementById('strategy-tools-step3').style.display = 'none';
             document.getElementById('break-tools-step3').style.display = 'none';
+            if(document.getElementById('ai-tools-step3')) document.getElementById('ai-tools-step3').style.display = 'none';
             document.getElementById('actions-calc').style.display = 'flex';
             document.getElementById('actions-strat').style.display = 'none';
+            if(document.getElementById('actions-ai')) document.getElementById('actions-ai').style.display = 'none';
         }
     }
 
     if (step === 4) {
-        document.getElementById('recap-calc').style.display = (!isStrategyMode && !isBreakMode) ? 'block' : 'none';
+        document.getElementById('recap-calc').style.display = (!isStrategyMode && !isBreakMode && !isAiMode) ? 'block' : 'none';
         document.getElementById('recap-strat').style.display = isStrategyMode ? 'block' : 'none';
         document.getElementById('recap-break').style.display = isBreakMode ? 'block' : 'none';
+        if(document.getElementById('recap-ai')) document.getElementById('recap-ai').style.display = isAiMode ? 'block' : 'none';
         if (isBreakMode) {
             document.getElementById('breakLineCount').textContent = breakLanes.length;
         }
@@ -593,6 +613,19 @@ function drawCanvas() {
         const centerX = fieldBounds.x + fieldBounds.w / 2;
         ctx.beginPath(); ctx.moveTo(centerX, fieldBounds.y); ctx.lineTo(centerX, fieldBounds.y + fieldBounds.h);
         ctx.setLineDash([10, 10]); ctx.strokeStyle = 'rgba(239, 83, 80, 0.6)'; ctx.stroke(); ctx.setLineDash([]); 
+        
+        const baseY = fieldBounds.y + fieldBounds.h / 2 - 30;
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.2)';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2;
+        ctx.fillRect(fieldBounds.x - 10, baseY, 20, 60);
+        ctx.strokeRect(fieldBounds.x - 10, baseY, 20, 60);
+        
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText("BASE", fieldBounds.x, baseY - 5);
     }
 
     ctx.globalAlpha = 1.0; 
@@ -1091,3 +1124,382 @@ window.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('tutorialSeen_Paintball', 'true');
     }
 });
+
+// ========================================
+// MOTEUR IA (GÉNÉRATION AUTO)
+// ========================================
+window.generateAIStrategy = function(style) {
+    if (!fieldBounds || obstacles.length === 0) {
+        alert("Veuillez d'abord tracer les limites du terrain et poser des obstacles !");
+        return;
+    }
+    
+    shooters = [];
+    lockedLines = [];
+    previewLines = [];
+    arrows = [];
+    breakMyRuns = [];
+    breakOpponentRuns = [];
+    breakLanes = [];
+    
+    const centerX = fieldBounds.x + fieldBounds.w / 2;
+    const centerY = fieldBounds.y + fieldBounds.h / 2;
+    
+    const baseStartX = fieldBounds.x + 10;
+    const baseStartY = fieldBounds.y + fieldBounds.h / 2;
+    
+    let potentialSpots = [];
+    
+    obstacles.forEach((obs, idx) => {
+        const coverDistance = obs.size * 1.5 + 15;
+        let spotX = obs.x - coverDistance;
+        let spotY = obs.y; 
+        
+        if (spotX < fieldBounds.x + 5) spotX = fieldBounds.x + 5;
+        if (spotX > fieldBounds.x + fieldBounds.w - 5) spotX = fieldBounds.x + fieldBounds.w - 5;
+        if (spotY < fieldBounds.y + 5) spotY = fieldBounds.y + 5;
+        if (spotY > fieldBounds.y + fieldBounds.h - 5) spotY = fieldBounds.y + fieldBounds.h - 5;
+        
+        potentialSpots.push({ id: 'spot_' + idx, x: spotX, y: spotY, obs: obs });
+    });
+    
+    if (potentialSpots.length < 5) {
+        potentialSpots.push({ id: 'fb_1', x: fieldBounds.x + fieldBounds.w * 0.1, y: fieldBounds.y + fieldBounds.h * 0.2, obs: null });
+        potentialSpots.push({ id: 'fb_2', x: fieldBounds.x + fieldBounds.w * 0.1, y: fieldBounds.y + fieldBounds.h * 0.8, obs: null });
+        potentialSpots.push({ id: 'fb_3', x: fieldBounds.x + fieldBounds.w * 0.2, y: fieldBounds.y + fieldBounds.h * 0.5, obs: null });
+        potentialSpots.push({ id: 'fb_4', x: fieldBounds.x + fieldBounds.w * 0.3, y: fieldBounds.y + fieldBounds.h * 0.3, obs: null });
+        potentialSpots.push({ id: 'fb_5', x: fieldBounds.x + fieldBounds.w * 0.3, y: fieldBounds.y + fieldBounds.h * 0.7, obs: null });
+    }
+    
+    // ----------------------------------------------------
+    // IA TACTIQUE : Tireurs adverses pour calculer le Danger
+    // ----------------------------------------------------
+    const enemyShooters = [
+        { x: fieldBounds.x + fieldBounds.w - 20, y: centerY }, // Home
+        { x: fieldBounds.x + fieldBounds.w - 50, y: fieldBounds.y + 40 }, // Dorito adverse
+        { x: fieldBounds.x + fieldBounds.w - 50, y: fieldBounds.y + fieldBounds.h - 40 } // Snake adverse
+    ];
+    
+    function findSafestPath(startNode, endNode) {
+        let nodesList = [startNode, ...potentialSpots];
+        let distances = {};
+        let previous = {};
+        let unvisited = new Set();
+        
+        nodesList.forEach(n => {
+            distances[n.id] = Infinity;
+            previous[n.id] = null;
+            unvisited.add(n.id);
+        });
+        distances[startNode.id] = 0;
+        
+        while (unvisited.size > 0) {
+            let current = null;
+            for (let id of unvisited) {
+                if (current === null || distances[id] < distances[current]) current = id;
+            }
+            
+            if (distances[current] === Infinity) break;
+            if (current === endNode.id) break;
+            unvisited.delete(current);
+            
+            let uNode = nodesList.find(n => n.id === current);
+            
+            for (let vNode of nodesList) {
+                if (!unvisited.has(vNode.id)) continue;
+                if (vNode.x < uNode.x - 30) continue; // Pas de grand retour en arrière
+                if (Math.hypot(vNode.x - uNode.x, vNode.y - uNode.y) > fieldBounds.w * 0.6) continue; // Saut trop long
+                
+                let dist = Math.hypot(vNode.x - uNode.x, vNode.y - uNode.y);
+                let exposureCost = 0;
+                
+                // Calcul d'exposition par Raycasting (3 points sur le segment)
+                const pts = [
+                    {x: uNode.x + (vNode.x - uNode.x)*0.3, y: uNode.y + (vNode.y - uNode.y)*0.3},
+                    {x: uNode.x + (vNode.x - uNode.x)*0.5, y: uNode.y + (vNode.y - uNode.y)*0.5},
+                    {x: uNode.x + (vNode.x - uNode.x)*0.7, y: uNode.y + (vNode.y - uNode.y)*0.7}
+                ];
+                
+                for (let pt of pts) {
+                    for (let shooter of enemyShooters) {
+                        let blocked = false;
+                        for (let obs of obstacles) {
+                            if (obs === uNode.obs || obs === vNode.obs) continue;
+                            if (doesLineIntersectObstacle(shooter.x, shooter.y, pt.x, pt.y, obs)) {
+                                blocked = true; break;
+                            }
+                        }
+                        if (!blocked) exposureCost += 250; // LOURDE pénalité si tir dégagé
+                    }
+                }
+                
+                let alt = distances[current] + dist + exposureCost;
+                if (alt < distances[vNode.id]) {
+                    distances[vNode.id] = alt;
+                    previous[vNode.id] = current;
+                }
+            }
+        }
+        
+        let path = [];
+        let curr = endNode.id;
+        while (curr) {
+            path.unshift(nodesList.find(n => n.id === curr));
+            curr = previous[curr];
+        }
+        return path;
+    }
+    
+    // ----------------------------------------------------
+    // NOUVEAU: Sélection de l'équipe par RÔLES STRICTS
+    // ----------------------------------------------------
+    let selectedSpots = [];
+    
+    let sortedForHome = [...potentialSpots].sort((a, b) => {
+        const distA = Math.hypot(a.x - baseStartX, a.y - baseStartY);
+        const distB = Math.hypot(b.x - baseStartX, b.y - baseStartY);
+        return distA - distB;
+    });
+
+    const getSpots = (condition) => potentialSpots.filter(s => condition(s) && !selectedSpots.includes(s));
+
+    if (style === 'offensive') {
+        // L'offensive doit être agressive (aller jusqu'au 50) mais par les couloirs
+        const attackLine = centerX + 50;
+        
+        // 1. Home (Back Center)
+        let home = sortedForHome[0];
+        if (home) { home.isHome = true; selectedSpots.push(home); }
+        
+        // 2. Runner Snake (Bas, agressif)
+        let snakeSpots = getSpots(s => s.y > centerY + fieldBounds.h * 0.15 && s.x <= attackLine);
+        snakeSpots.sort((a, b) => b.x - a.x);
+        if (snakeSpots.length > 0) selectedSpots.push(snakeSpots[0]);
+        
+        // 3. Runner Dorito (Haut, agressif)
+        let doritoSpots = getSpots(s => s.y < centerY - fieldBounds.h * 0.15 && s.x <= attackLine);
+        doritoSpots.sort((a, b) => b.x - a.x);
+        if (doritoSpots.length > 0) selectedSpots.push(doritoSpots[0]);
+        
+        // 4. Center 50
+        let centerSpots = getSpots(s => Math.abs(s.y - centerY) <= fieldBounds.h * 0.20 && s.x <= attackLine);
+        centerSpots.sort((a, b) => b.x - a.x);
+        if (centerSpots.length > 0) selectedSpots.push(centerSpots[0]);
+        
+        // 5. Insert / Support
+        let insertSpots = getSpots(s => s.x > baseStartX + 40 && s.x < centerX - 40);
+        insertSpots.sort((a, b) => b.x - a.x);
+        if (insertSpots.length > 0) selectedSpots.push(insertSpots[0]);
+        
+    } else { // défensive
+        // 1 & 2. Homes
+        for (let i = 0; i < 2; i++) {
+            let home = sortedForHome.find(s => !selectedSpots.includes(s) && (!selectedSpots[0] || Math.abs(s.y - selectedSpots[0].y) > 40));
+            if (home) { home.isHome = true; selectedSpots.push(home); }
+        }
+        
+        // 3. Back Snake (Safe)
+        let snakeSpots = getSpots(s => s.y > centerY + fieldBounds.h * 0.15 && s.x < centerX - 50);
+        snakeSpots.sort((a, b) => a.x - b.x); // safe
+        if (snakeSpots.length > 0) selectedSpots.push(snakeSpots[0]);
+        
+        // 4. Back Dorito (Safe)
+        let doritoSpots = getSpots(s => s.y < centerY - fieldBounds.h * 0.15 && s.x < centerX - 50);
+        doritoSpots.sort((a, b) => a.x - b.x); // safe
+        if (doritoSpots.length > 0) selectedSpots.push(doritoSpots[0]);
+        
+        // 5. Back Center / God
+        let centerSpots = getSpots(s => Math.abs(s.y - centerY) <= fieldBounds.h * 0.25 && s.x < centerX - 20);
+        centerSpots.sort((a, b) => a.x - b.x);
+        if (centerSpots.length > 0) selectedSpots.push(centerSpots[0]);
+    }
+    
+    // Secours si le terrain manque de modules
+    for (let spot of potentialSpots) {
+        if (selectedSpots.length >= 5) break;
+        if (!selectedSpots.includes(spot)) {
+            let tooClose = false;
+            for (let sel of selectedSpots) {
+                if (Math.hypot(spot.x - sel.x, spot.y - sel.y) < 40) { tooClose = true; break; }
+            }
+            if (!tooClose) selectedSpots.push(spot);
+        }
+    }
+    
+    function pointToLineDist(px, py, x1, y1, x2, y2) {
+        const A = px - x1; const B = py - y1; const C = x2 - x1; const D = y2 - y1;
+        const dot = A * C + B * D; const lenSq = C * C + D * D;
+        let param = -1;
+        if (lenSq !== 0) param = dot / lenSq; // CORRECTION: pas de signe négatif
+        let closestX, closestY;
+        if (param < 0) { closestX = x1; closestY = y1; } 
+        else if (param > 1) { closestX = x2; closestY = y2; } 
+        else { closestX = x1 + param * C; closestY = y1 + param * D; }
+        return Math.hypot(px - closestX, py - closestY);
+    }
+    
+    function doesLineIntersectObstacle(x1, y1, x2, y2, obs) {
+        const config = OBSTACLE_CONFIG[obs.type];
+        const radius = obs.size * (config ? Math.max(config.w, config.h) : 1) / 1.5;
+        return pointToLineDist(obs.x, obs.y, x1, y1, x2, y2) < radius;
+    }
+    
+    for (let i = 0; i < 5; i++) {
+        if (i < selectedSpots.length) {
+            const spot = selectedSpots[i];
+            const playerNum = i + 1;
+            const color = SHOOTER_COLORS[i % SHOOTER_COLORS.length];
+            
+            let stance = 'standing';
+            if (spot.obs) {
+                if (spot.obs.height === 'medium') stance = 'kneeling';
+                if (spot.obs.height === 'low' || spot.obs.type === 'snake') stance = 'prone';
+            }
+            
+            shooters.push({ id: Date.now() + i, x: spot.x, y: spot.y, stance: stance, team: 'left', color: color, active: true, playerNum: playerNum });
+            
+            let currentX = baseStartX;
+            let currentY = baseStartY + (i - 2) * 15;
+            const distToBase = spot.x - baseStartX;
+            
+            let useRelay = false;
+            let bestRelay = null;
+            
+            // Pathfinding récursif par Waypoints pour esquiver les modules (micro-gestion)
+            function routeSafeArrow(startX, startY, endX, endY, pNum, col, targetObs = null, startObs = null, depth = 0) {
+                if (depth > 2) { 
+                    arrows.push({ x1: startX, y1: startY, x2: endX, y2: endY, color: col, playerNum: pNum });
+                    return;
+                }
+                
+                let hitObs = null;
+                let minDist = 99999;
+                for (let o of obstacles) {
+                    if (o === startObs || o === targetObs) continue;
+                    
+                    if (doesLineIntersectObstacle(startX, startY, endX, endY, o)) {
+                        const d = Math.hypot(o.x - startX, o.y - startY);
+                        if (d < minDist) { minDist = d; hitObs = o; }
+                    }
+                }
+                
+                if (hitObs) {
+                    const config = OBSTACLE_CONFIG[hitObs.type];
+                    const avoidDist = hitObs.size * (config ? Math.max(config.w, config.h) : 1) / 1.5 + 15;
+                    
+                    let wp1Y = hitObs.y - avoidDist;
+                    let wp2Y = hitObs.y + avoidDist;
+                    
+                    wp1Y = Math.max(fieldBounds.y + 5, Math.min(fieldBounds.y + fieldBounds.h - 5, wp1Y));
+                    wp2Y = Math.max(fieldBounds.y + 5, Math.min(fieldBounds.y + fieldBounds.h - 5, wp2Y));
+                    
+                    const wp1 = { x: hitObs.x, y: wp1Y };
+                    const wp2 = { x: hitObs.x, y: wp2Y };
+                    
+                    const d1 = pointToLineDist(wp1.x, wp1.y, startX, startY, endX, endY);
+                    const d2 = pointToLineDist(wp2.x, wp2.y, startX, startY, endX, endY);
+                    
+                    const bestWp = (d1 < d2) ? wp1 : wp2;
+                    
+                    arrows.push({ x1: startX, y1: startY, x2: bestWp.x, y2: bestWp.y, color: col, playerNum: pNum });
+                    routeSafeArrow(bestWp.x, bestWp.y, endX, endY, pNum, col, targetObs, hitObs, depth + 1);
+                } else {
+                    arrows.push({ x1: startX, y1: startY, x2: endX, y2: endY, color: col, playerNum: pNum });
+                }
+            }
+            
+            const arrColor = color.replace('0.3', '1');
+            
+            if (spot.isHome) {
+                routeSafeArrow(currentX, currentY, spot.x, spot.y, playerNum, arrColor, spot.obs, null);
+                continue;
+            }
+            
+            let baseNode = { id: 'base_' + playerNum, x: currentX, y: currentY, obs: null };
+            let path = findSafestPath(baseNode, spot);
+            
+            // Si le graphe est bloqué, secours direct
+            if (path.length < 2) {
+                routeSafeArrow(currentX, currentY, spot.x, spot.y, playerNum, arrColor, spot.obs, null);
+                continue;
+            }
+            
+            for (let j = 0; j < path.length - 1; j++) {
+                let n1 = path[j];
+                let n2 = path[j+1];
+                
+                let startX = n1.x; let startY = n1.y;
+                if (n1.obs && n1.x < n2.x) { // Si on repart d'un obstacle
+                    const config = OBSTACLE_CONFIG[n1.obs.type];
+                    const avoidDist = n1.obs.size * (config ? Math.max(config.w, config.h) : 1) / 1.5 + 15;
+                    const dirY = n2.y > n1.y ? 1 : -1;
+                    startX = n1.obs.x;
+                    startY = n1.obs.y + avoidDist * dirY;
+                    arrows.push({ x1: n1.x, y1: n1.y, x2: startX, y2: startY, color: arrColor, playerNum: playerNum });
+                }
+                
+                routeSafeArrow(startX, startY, n2.x, n2.y, playerNum, arrColor, n2.obs, n1.obs);
+            }
+        }
+    }
+    
+    // ----------------------------------------------------
+    // Visée intelligente (Smart Aiming Physique)
+    // ----------------------------------------------------
+    
+    const originalStrategyMode = isStrategyMode;
+    isStrategyMode = false;
+    calculateSightlines();
+    const allPhysicsLines = [...previewLines];
+    previewLines = [];
+    isStrategyMode = originalStrategyMode;
+
+    const enemyTargets = [
+        { x: fieldBounds.x + fieldBounds.w - 100, y: fieldBounds.y + fieldBounds.h * 0.1 }, 
+        { x: fieldBounds.x + fieldBounds.w - 150, y: fieldBounds.y + fieldBounds.h * 0.3 }, 
+        { x: fieldBounds.x + fieldBounds.w - 80,  y: fieldBounds.y + fieldBounds.h * 0.5 }, 
+        { x: fieldBounds.x + fieldBounds.w - 150, y: fieldBounds.y + fieldBounds.h * 0.7 }, 
+        { x: fieldBounds.x + fieldBounds.w - 100, y: fieldBounds.y + fieldBounds.h * 0.9 }  
+    ];
+    
+    let sortedShooters = [...shooters].sort((a, b) => a.y - b.y);
+    
+    sortedShooters.forEach((s, index) => {
+        let targetIndex = style === 'defensive' ? (4 - index) : index;
+        let target = enemyTargets[targetIndex];
+        
+        const targetAngle = Math.atan2(target.y - s.y, target.x - s.x);
+        
+        let bestLine = null;
+        let minAngleDiff = 999;
+        
+        const myLines = allPhysicsLines.filter(l => l.shooterId === s.id && !l.isBlind);
+        
+        if (myLines.length > 0) {
+            myLines.forEach(l => {
+                const lineAngle = Math.atan2(l.y2 - l.y1, l.x2 - l.x1);
+                let diff = Math.abs(targetAngle - lineAngle);
+                while (diff > Math.PI) diff -= 2 * Math.PI;
+                diff = Math.abs(diff);
+                
+                if (diff < minAngleDiff) {
+                    minAngleDiff = diff;
+                    bestLine = l;
+                }
+            });
+        }
+        
+        if (bestLine) {
+            lockedLines.push(bestLine);
+        } else {
+            lockedLines.push({
+                x1: s.x, y1: s.y, x2: target.x, y2: target.y,
+                shooterId: s.id, color: s.color, isBlind: true 
+            });
+        }
+    });
+    
+    updateUI();
+    drawCanvas();
+    goToStep(4);
+};

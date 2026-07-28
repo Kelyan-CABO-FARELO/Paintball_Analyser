@@ -29,10 +29,11 @@
                     <h3>⚙️ 1. Mode & Terrain</h3>
                     <p class="help-text">Choisis ton mode de planification avant de commencer.</p>
                     
-                    <div class="mode-switch" style="margin-bottom: 20px;">
-                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')">🧮 Live (Rapide)</div>
-                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')">🗺️ Stratégie Pro</div>
-                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')">🏃 Assistant Break</div>
+                    <div class="mode-switch" style="margin-bottom: 20px; flex-wrap: wrap;">
+                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')" style="flex: 1 1 45%;">🧮 Live</div>
+                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')" style="flex: 1 1 45%;">🗺️ Pro</div>
+                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')" style="flex: 1 1 45%;">🏃 Break</div>
+                        <div class="stance-btn" id="btn-mode-ai" onclick="setAppMode('ai')" style="flex: 1 1 45%; color: #a855f7; border-color: #a855f7;">🤖 IA Auto</div>
                     </div>
 
                     <input type="file" id="imageInput" accept="image/*" class="file-input" style="margin-bottom: 5px;">
@@ -111,6 +112,15 @@
                         </div>
                     </div>
 
+                    <div id="ai-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#a855f7;">Génération IA</label>
+                        <p class="help-text" style="margin-bottom:10px;">L'IA va analyser les modules et générer un plan de jeu complet.</p>
+                        <div class="stance-selector" style="flex-direction: column; gap: 10px; width: 100%;">
+                            <button class="btn btn-outline" onclick="generateAIStrategy('defensive')" style="width: 100%; border-color: #3b82f6; color: #3b82f6;">🛡️ Générer Stratégie Défensive</button>
+                            <button class="btn btn-outline" onclick="generateAIStrategy('offensive')" style="width: 100%; border-color: #ef4444; color: #ef4444;">⚔️ Générer Stratégie Offensive</button>
+                        </div>
+                    </div>
+
                     <div class="shooter-list" id="shooterList"></div>
 
                     <div class="step-actions" id="actions-calc">
@@ -119,6 +129,10 @@
                     </div>
                     <div class="step-actions" id="actions-strat" style="display: none;">
                         <button class="btn btn-success" onclick="nextStrategyPlayer()">Valider Joueur <span id="btnNextPlayerNum">1</span> ➔</button>
+                    </div>
+                    <div class="step-actions" id="actions-ai" style="display: none;">
+                        <button class="btn btn-outline" onclick="goToStep(2)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(4)">Terminer ➔</button>
                     </div>
                 </div>
 
@@ -148,6 +162,13 @@
                         <p class="help-text">Analyse d'interception validée.</p>
                         <div class="stats-box" style="border-left-color: #22c55e;">
                             <p>Fenêtres de tir : <strong id="breakLineCount">0</strong></p>
+                        </div>
+                    </div>
+
+                    <div id="recap-ai" style="display: none;">
+                        <p class="help-text">Stratégie IA générée validée.</p>
+                        <div class="stats-box" style="border-left-color: #a855f7;">
+                            <p>Joueurs placés automatiquement : <strong>5</strong></p>
                         </div>
                     </div>
 
