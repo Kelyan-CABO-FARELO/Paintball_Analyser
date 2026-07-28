@@ -115,6 +115,13 @@
                     <div id="ai-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
                         <label style="color:#a855f7;">Génération IA</label>
                         <p class="help-text" style="margin-bottom:10px;">L'IA va analyser les modules et générer un plan de jeu complet.</p>
+
+                        <label style="margin-bottom: 5px; display: block; font-size: 0.85rem; color: #94a3b8;">Personnaliser la menace (Optionnel)</label>
+                        <div class="stance-selector" style="margin-bottom: 15px;">
+                            <div class="stance-btn active" id="btn-tool-ai-none" onclick="setAiTool('none')">🖱️ Rien</div>
+                            <div class="stance-btn" id="btn-tool-ai-enemy" onclick="setAiTool('enemy')">🔴 Placer Ennemi</div>
+                        </div>
+
                         <div class="stance-selector" style="flex-direction: column; gap: 10px; width: 100%;">
                             <button class="btn btn-outline" onclick="generateAIStrategy('defensive')" style="width: 100%; border-color: #3b82f6; color: #3b82f6;">🛡️ Générer Stratégie Défensive</button>
                             <button class="btn btn-outline" onclick="generateAIStrategy('offensive')" style="width: 100%; border-color: #ef4444; color: #ef4444;">⚔️ Générer Stratégie Offensive</button>
