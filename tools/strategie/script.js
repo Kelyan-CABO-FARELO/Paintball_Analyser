@@ -200,7 +200,7 @@ window.goToStep = function(step) {
 // ========================================
 window.exportPlan = function() {
     const link = document.createElement('a');
-    link.download = 'Plan_Los_Calamares.png'; 
+    link.download = 'Plan_Tactique.png';
     link.href = canvas.toDataURL('image/png');
     link.click();
 };

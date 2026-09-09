@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stratégie & Tactique — Paintball Analyser</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <header class="topbar">
+            <a href="../../index.html" class="btn-outline" style="position: absolute; left: 20px; padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center;">⬅️ Boîte à outils</a>
+            <div class="stepper">
+                <div class="step active" id="indicator-step1"><span class="step-num">1</span> Paramètres</div>
+                <div class="step" id="indicator-step2"><span class="step-num">2</span> Modules</div>
+                <div class="step" id="indicator-step3"><span class="step-num">3</span> Déploiement</div>
+                <div class="step" id="indicator-step4"><span class="step-num">4</span> Validation</div>
+            </div>
+            <div style="position: absolute; right: 20px; display: flex; gap: 10px;">
+                <button id="tutorialBtn" class="btn-outline" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">❓ Tutoriel</button>
+                <button id="resetBtn" class="btn-danger-outline">🗑️ Reset Total</button>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <aside class="sidebar">
+
+                <div class="step-panel" id="panel-step1">
+                    <h3>⚙️ 1. Mode & Terrain</h3>
+                    <p class="help-text">Choisis ton mode de planification avant de commencer.</p>
+                    
+                    <div class="mode-switch" style="margin-bottom: 20px; flex-wrap: wrap;">
+                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')" style="flex: 1 1 45%;">🧮 Live</div>
+                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')" style="flex: 1 1 45%;">🗺️ Pro</div>
+                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')" style="flex: 1 1 45%;">🏃 Break</div>
+                        <div class="stance-btn" id="btn-mode-ai" onclick="setAppMode('ai')" style="flex: 1 1 45%; color: #a855f7; border-color: #a855f7;">🤖 IA Auto</div>
+                    </div>
+
+                    <input type="file" id="imageInput" accept="image/*" class="file-input" style="margin-bottom: 5px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="loadLayoutLocal()">📂 Charger le layout sauvegardé</button>
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="document.getElementById('importLayoutInput').click()">📁 Importer un fichier</button>
+                        <input type="file" id="importLayoutInput" accept=".json" style="display:none">
+                    </div>
+                    <button id="drawFieldBtn" class="btn btn-secondary">📏 Tracer les limites du terrain</button>
+                    <p id="detectionStatus" class="status-text">En attente d'image...</p>
+                    
+                    <div class="step-actions">
+                        <button class="btn btn-primary" onclick="goToStep(2)">Construire le terrain ➔</button>
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel-step2" style="display: none;">
+                    <h3>🚧 2. Construction</h3>
+                    <p class="help-text">Clique pour poser les modules. <b>Ctrl+Clic</b> pour supprimer.</p>
+                    
+                    <div class="obstacle-grid">
+                        <div class="obstacle-btn active" data-type="snake" data-height="low">🐍 Snake<span class="height-badge height-low">BAS</span></div>
+                        <div class="obstacle-btn" data-type="dorito" data-height="high">🔺 Voile<span class="height-badge height-high">HAUT</span></div>
+                        <div class="obstacle-btn" data-type="can" data-height="high">🥫 Cannette<span class="height-badge height-high">HAUT</span></div>
+                        <div class="obstacle-btn" data-type="temple" data-height="high">⛩️ Temple<span class="height-badge height-high">HAUT</span></div>
+                        <div class="obstacle-btn" data-type="brick" data-height="medium">🧱 M/Brique<span class="height-badge height-medium">MOY</span></div>
+                        <div class="obstacle-btn" data-type="x" data-height="medium">❌ Star<span class="height-badge height-medium">MOY</span></div>
+                        <div class="obstacle-btn" data-type="goat" data-height="low">🐐 Chavrou<span class="height-badge height-low">BAS</span></div>
+                        <div class="obstacle-btn" data-type="totem" data-height="high">🗿 Totem<span class="height-badge height-high">HAUT</span></div>
+                    </div>
+
+                    <div class="slider-group">
+                        <label>Dimensions : <span id="sizeValue" style="color:#38bdf8; font-weight:bold;">Taille: 25 | Angle: 0°</span></label>
+                        <input type="range" id="sizeSlider" min="15" max="50" value="25">
+                        <p class="help-text">Molette = Taille | Shift+Molette = Angle</p>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="saveLayoutLocal()">💾 Sauvegarder Layout (Local)</button>
+                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="exportLayout()">📤 Exporter (Fichier)</button>
+                    </div>
+
+                    <div class="step-actions">
+                        <button class="btn btn-outline" onclick="goToStep(1)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(3)">Valider Modules 🔒</button>
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel-step3" style="display: none;">
+                    <h3 id="step3-title">👥 3. Déploiement</h3>
+                    <p class="help-text" id="step3-desc">Place tes joueurs. L'analyse est en direct.</p>
+
+                    <div class="tool-group" id="posture-selector">
+                        <label>Posture du tireur</label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" data-stance="standing">🧍 Debout</div>
+                            <div class="stance-btn" data-stance="kneeling">🧎 Genou</div>
+                            <div class="stance-btn" data-stance="prone">🤸 Couché</div>
+                        </div>
+                    </div>
+
+                    <div id="strategy-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#38bdf8;">Planification : Joueur <span id="currentPlayerNum">1</span></label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" id="btn-tool-place" onclick="setTool('place')">🧍 Placer</div>
+                            <div class="stance-btn" id="btn-tool-select" onclick="setTool('select')">🖱️ Lignes</div>
+                            <div class="stance-btn" id="btn-tool-arrow" onclick="setTool('arrow')">↗️ Course</div>
+                        </div>
+                    </div>
+
+                    <div id="break-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#22c55e;">Analyse du Break</label>
+                        <div class="stance-selector">
+                            <div class="stance-btn active" id="btn-tool-break-myrun" onclick="setBreakTool('myrun')">🔵 Notre Course</div>
+                            <div class="stance-btn" id="btn-tool-break-opprun" onclick="setBreakTool('opprun')">🔴 Course Adverse</div>
+                        </div>
+                    </div>
+
+                    <div id="ai-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
+                        <label style="color:#a855f7;">Génération IA</label>
+                        <p class="help-text" style="margin-bottom:10px;">L'IA va analyser les modules et générer un plan de jeu complet.</p>
+
+                        <label style="margin-bottom: 5px; display: block; font-size: 0.85rem; color: #94a3b8;">Personnaliser la menace (Optionnel)</label>
+                        <div class="stance-selector" style="margin-bottom: 15px;">
+                            <div class="stance-btn active" id="btn-tool-ai-none" onclick="setAiTool('none')">🖱️ Rien</div>
+                            <div class="stance-btn" id="btn-tool-ai-enemy" onclick="setAiTool('enemy')">🔴 Placer Ennemi</div>
+                        </div>
+
+                        <div class="stance-selector" style="flex-direction: column; gap: 10px; width: 100%;">
+                            <button class="btn btn-outline" onclick="generateAIStrategy('defensive')" style="width: 100%; border-color: #3b82f6; color: #3b82f6;">🛡️ Générer Stratégie Défensive</button>
+                            <button class="btn btn-outline" onclick="generateAIStrategy('offensive')" style="width: 100%; border-color: #ef4444; color: #ef4444;">⚔️ Générer Stratégie Offensive</button>
+                        </div>
+                    </div>
+
+                    <div class="shooter-list" id="shooterList"></div>
+
+                    <div class="step-actions" id="actions-calc">
+                        <button class="btn btn-outline" onclick="goToStep(2)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(4)">Terminer ➔</button>
+                    </div>
+                    <div class="step-actions" id="actions-strat" style="display: none;">
+                        <button class="btn btn-success" onclick="nextStrategyPlayer()">Valider Joueur <span id="btnNextPlayerNum">1</span> ➔</button>
+                    </div>
+                    <div class="step-actions" id="actions-ai" style="display: none;">
+                        <button class="btn btn-outline" onclick="goToStep(2)">⬅️ Retour</button>
+                        <button class="btn btn-primary" onclick="goToStep(4)">Terminer ➔</button>
+                    </div>
+                </div>
+
+                <div class="step-panel" id="panel-step4" style="display: none;">
+                    <h3>✅ 4. Plan de Jeu</h3>
+                    
+                    <div id="recap-calc">
+                        <p class="help-text">Aperçu en direct validé.</p>
+                        <div class="stats-box">
+                            <p>Lignes calculées : <strong id="lineCount">0</strong></p>
+                        </div>
+                    </div>
+
+                    <div id="recap-strat" style="display: none;">
+                        <p class="help-text">Playbook de l'équipe prêt à l'emploi.</p>
+                        
+                        <div class="chat-placeholder">
+                            <div class="chat-header">💬 Discussion d'Équipe</div>
+                            <div class="chat-body">
+                                <em>La messagerie en direct arrivera dans la prochaine mise à jour BDD.</em>
+                            </div>
+                            <input type="text" placeholder="Écrire un message..." disabled style="width:100%; padding:8px; margin-top:10px; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#64748b;">
+                        </div>
+                    </div>
+
+                    <div id="recap-break" style="display: none;">
+                        <p class="help-text">Analyse d'interception validée.</p>
+                        <div class="stats-box" style="border-left-color: #22c55e;">
+                            <p>Fenêtres de tir : <strong id="breakLineCount">0</strong></p>
+                        </div>
+                    </div>
+
+                    <div id="recap-ai" style="display: none;">
+                        <p class="help-text">Stratégie IA générée validée.</p>
+                        <div class="stats-box" style="border-left-color: #a855f7;">
+                            <p>Joueurs placés automatiquement : <strong>5</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="step-actions" style="margin-top: 20px; flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="exportPlan()">📸 Exporter le Plan (Image)</button>
+                        <button class="btn btn-outline" onclick="goToStep(3)">⬅️ Modifier la tactique</button>
+                    </div>
+                </div>
+
+            </aside>
+
+            <section class="canvas-wrapper">
+                <canvas id="canvas" width="1000" height="700"></canvas>
+            </section>
+        </main>
+    </div>
+
+    <!-- TUTORIAL MODAL -->
+    <div id="tutorialModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h2 id="tut-title">Bienvenue</h2>
+            <div id="tut-body">
+                <p>Chargement...</p>
+            </div>
+            <div class="modal-actions">
+                <button id="tut-prev" class="btn btn-outline" style="display: none;">Précédent</button>
+                <button id="tut-next" class="btn btn-primary">Suivant</button>
+                <button id="tut-close" class="btn btn-outline">Passer</button>
+            </div>
+            <div class="tut-progress">
+                <span class="dot active"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+                <span class="dot"></span>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

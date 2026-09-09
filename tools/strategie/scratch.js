@@ -1,5 +1,5 @@
 const fs = require('fs');
-let code = fs.readFileSync('/home/kcabofarelo/DEV/Paintball_Analyser/script.js', 'utf8');
+let code = fs.readFileSync('/home/kcabofarelo/DEV/Paintball_Analyser/tools/strategie/script.js', 'utf8');
 
 // We evaluate the code in a mocked context to catch the exact runtime error
 const vm = require('vm');
