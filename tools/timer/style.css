@@ -1,0 +1,147 @@
+:root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-hover: #24344f;
+    --border: #334155;
+    --border-light: #475569;
+    --text: #f8fafc;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --accent: #38bdf8;
+    --success: #22c55e;
+    --danger: #ef4444;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.14) 1px, transparent 0) 0 0 / 26px 26px,
+        var(--bg);
+}
+
+.topbar {
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    height: 70px;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.back-link {
+    position: absolute;
+    left: 20px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+}
+
+.back-link:hover { background: var(--border); color: var(--text); }
+
+.topbar .title {
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+}
+
+.timer-main {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 40px 20px 80px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 28px;
+}
+
+.display-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    padding: 32px 20px;
+    text-align: center;
+}
+
+.clock {
+    font-size: 4.5rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.clock.warning { color: var(--danger); }
+
+.phase-label {
+    margin-top: 10px;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    min-height: 1.2em;
+}
+
+.durations-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+}
+
+.duration-btn {
+    background: var(--panel);
+    border: 1px solid var(--border-light);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 16px 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.duration-btn:hover { background: var(--panel-hover); border-color: var(--accent); color: var(--accent); }
+.duration-btn.running { border-color: var(--accent); color: var(--accent); background: var(--panel-hover); }
+
+.stop-btn {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.stop-btn:hover { background: var(--border); color: var(--text); }
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background: var(--border);
+}
+
+.game-finished-btn {
+    width: 100%;
+    padding: 22px;
+    border-radius: 10px;
+    background: transparent;
+    border: 2px solid var(--danger);
+    color: var(--danger);
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.game-finished-btn:hover { background: var(--danger); color: var(--text); }

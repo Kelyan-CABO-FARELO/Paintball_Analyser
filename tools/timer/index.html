@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer de Match — Paintball Analyser</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="topbar">
+        <a href="../../index.html" class="back-link">⬅️ Boîte à outils</a>
+        <div class="title">⏱️ Timer de Match</div>
+    </header>
+
+    <main class="timer-main">
+        <div class="display-panel">
+            <div class="clock" id="clockDisplay">--:--</div>
+            <div class="phase-label" id="phaseLabel">Choisis une durée pour démarrer</div>
+        </div>
+
+        <div class="durations-grid">
+            <button class="duration-btn" data-seconds="120" data-text="Two minutes">2:00</button>
+            <button class="duration-btn" data-seconds="60" data-text="One minute">1:00</button>
+            <button class="duration-btn" data-seconds="30" data-text="Thirty seconds">0:30</button>
+            <button class="duration-btn" data-seconds="20" data-text="Twenty seconds">0:20</button>
+            <button class="duration-btn" data-seconds="10" data-text="Ten seconds">0:10</button>
+        </div>
+
+        <button id="stopBtn" class="btn-outline stop-btn">⏹️ Arrêter</button>
+
+        <div class="divider"></div>
+
+        <button id="gameFinishedBtn" class="game-finished-btn">🏁 Game Finished</button>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>

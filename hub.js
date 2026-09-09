@@ -12,7 +12,9 @@ const TOOLS = [
     {
         icon: '⏱️',
         title: 'Timer',
-        status: 'soon',
+        description: "Minuteur de match pour le paintball sportif, avec annonces vocales et bips.",
+        href: 'tools/timer/index.html',
+        status: 'active',
     },
     { status: 'soon', empty: true },
     { status: 'soon', empty: true },
