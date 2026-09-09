@@ -104,6 +104,12 @@ body {
     cursor: not-allowed;
 }
 
+.tool-card.empty {
+    border-style: dashed;
+    align-items: center;
+    justify-content: center;
+}
+
 .tool-card .icon {
     font-size: 2rem;
     line-height: 1;

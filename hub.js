@@ -10,43 +10,37 @@ const TOOLS = [
         status: 'active',
     },
     {
-        icon: '🪪',
-        title: 'Licences & Membres',
-        description: "Gestion des licenciés du club, suivi des adhésions et des cotisations.",
+        icon: '⏱️',
+        title: 'Timer',
         status: 'soon',
     },
-    {
-        icon: '📅',
-        title: 'Planning & Entraînements',
-        description: "Organisation des séances d'entraînement et réservation des créneaux terrain.",
-        status: 'soon',
-    },
-    {
-        icon: '🎒',
-        title: 'Matériel & Inventaire',
-        description: "Suivi du matériel du club : billes, bouteilles, protections, marqueurs.",
-        status: 'soon',
-    },
-    {
-        icon: '📊',
-        title: 'Statistiques & Performance',
-        description: "Historique des matchs et statistiques de performance par joueur et par équipe.",
-        status: 'soon',
-    },
+    { status: 'soon', empty: true },
+    { status: 'soon', empty: true },
+    { status: 'soon', empty: true },
 ];
 
 function renderTools() {
     const grid = document.getElementById('toolsGrid');
     grid.innerHTML = TOOLS.map(tool => {
         const isActive = tool.status === 'active';
+        const statusLabel = isActive ? 'Disponible' : 'Bientôt disponible';
+
+        if (tool.empty) {
+            return `
+                <div class="tool-card disabled empty">
+                    <span class="status">${statusLabel}</span>
+                </div>
+            `;
+        }
+
         const tag = isActive ? 'a' : 'div';
         const hrefAttr = isActive ? `href="${tool.href}"` : '';
-        const statusLabel = isActive ? 'Disponible' : 'Bientôt disponible';
+        const descriptionHtml = tool.description ? `<p>${tool.description}</p>` : '<p></p>';
         return `
             <${tag} class="tool-card ${isActive ? 'active' : 'disabled'}" ${hrefAttr}>
                 <span class="icon">${tool.icon}</span>
                 <h3>${tool.title}</h3>
-                <p>${tool.description}</p>
+                ${descriptionHtml}
                 <span class="status">${statusLabel}</span>
             </${tag}>
         `;
