@@ -17,6 +17,9 @@ const TOOLS = [
     { status: 'soon', empty: true },
     { status: 'soon', empty: true },
     { status: 'soon', empty: true },
+    { status: 'soon', empty: true },
+    { status: 'soon', empty: true },
+    { status: 'soon', empty: true },
 ];
 
 function renderTools() {
@@ -35,11 +38,13 @@ function renderTools() {
 
         const tag = isActive ? 'a' : 'div';
         const hrefAttr = isActive ? `href="${tool.href}"` : '';
-        const descriptionHtml = tool.description ? `<p>${tool.description}</p>` : '<p></p>';
+        const descriptionHtml = tool.description ? `<p>${tool.description}</p>` : '';
         return `
             <${tag} class="tool-card ${isActive ? 'active' : 'disabled'}" ${hrefAttr}>
-                <span class="icon">${tool.icon}</span>
-                <h3>${tool.title}</h3>
+                <div class="row">
+                    <span class="icon">${tool.icon}</span>
+                    <h3>${tool.title}</h3>
+                </div>
                 ${descriptionHtml}
                 <span class="status">${statusLabel}</span>
             </${tag}>
