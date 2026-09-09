@@ -1051,7 +1051,7 @@ function drawArrow(ctx, fromx, fromy, tox, toy, color) {
 // ========================================
 const tutorialSteps = [
     {
-        title: "Bienvenue sur Paintball Analyser !",
+        title: "Bienvenue sur Stratégie & Tactique !",
         text: "Cet outil complet te permet de simuler la balistique et de préparer tes tournois. L'application possède 3 modes distincts :<br><br>• <b>🧮 Live (Rapide)</b> : Simulation directe avec 5 joueurs qu'on déplace librement.<br>• <b>🗺️ Stratégie Pro</b> : Éditeur avancé étape par étape pour construire un playbook complet.<br>• <b>🏃 Assistant Break</b> : Analyse dynamique des tirs d'interception pendant les courses."
     },
     {
@@ -1112,18 +1112,30 @@ function updateTutorial() {
     });
 }
 
-document.getElementById('tutorialBtn').addEventListener('click', () => {
+function openTutorial() {
     currentTutStep = 0;
     updateTutorial();
+    document.getElementById('tut-dismiss').checked = !!localStorage.getItem('tutorialDismissed_Paintball');
     document.getElementById('tutorialModal').style.display = 'flex';
-});
+}
+
+function closeTutorial() {
+    if (document.getElementById('tut-dismiss').checked) {
+        localStorage.setItem('tutorialDismissed_Paintball', 'true');
+    } else {
+        localStorage.removeItem('tutorialDismissed_Paintball');
+    }
+    document.getElementById('tutorialModal').style.display = 'none';
+}
+
+document.getElementById('tutorialBtn').addEventListener('click', openTutorial);
 
 document.getElementById('tut-next').addEventListener('click', () => {
     if (currentTutStep < tutorialSteps.length - 1) {
         currentTutStep++;
         updateTutorial();
     } else {
-        document.getElementById('tutorialModal').style.display = 'none';
+        closeTutorial();
     }
 });
 
@@ -1134,17 +1146,12 @@ document.getElementById('tut-prev').addEventListener('click', () => {
     }
 });
 
-document.getElementById('tut-close').addEventListener('click', () => {
-    document.getElementById('tutorialModal').style.display = 'none';
-});
+document.getElementById('tut-close').addEventListener('click', closeTutorial);
 
-// Show tutorial automatically on first load
+// Show tutorial automatically à chaque visite, sauf si l'utilisateur a choisi de ne plus le voir
 window.addEventListener('DOMContentLoaded', () => {
-    if (!localStorage.getItem('tutorialSeen_Paintball')) {
-        currentTutStep = 0;
-        updateTutorial();
-        document.getElementById('tutorialModal').style.display = 'flex';
-        localStorage.setItem('tutorialSeen_Paintball', 'true');
+    if (!localStorage.getItem('tutorialDismissed_Paintball')) {
+        openTutorial();
     }
 });
 

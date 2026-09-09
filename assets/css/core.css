@@ -152,6 +152,51 @@ button {
     color: var(--accent);
 }
 
+/* Modificateur pour la topbar des pages OUTIL (pas le hub) :
+   répartit back-link / topbar-title / topbar-actions sur toute
+   la largeur. Voir CLAUDE.md "Gabarit de topbar". */
+.topbar--tool {
+    justify-content: space-between;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Titre de l'outil dans la topbar d'une page outil (pas le hub) :
+   toujours centré entre le back-link et les topbar-actions, quel
+   que soit l'outil — voir CLAUDE.md "Gabarit de topbar". */
+.topbar-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+}
+
+.topbar-title .icon {
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+/* À activer par outil si le nom est long et risque de coller au
+   back-link ou aux actions sur mobile (voir .tool-title dans
+   tools/strategie/style.css pour un exemple d'activation). */
+.topbar-title.hide-label-on-mobile {
+    /* placeholder ciblé par la media query ci-dessous */
+}
+@media (max-width: 479px) {
+    .topbar-title.hide-label-on-mobile .label { display: none; }
+}
+
 .back-link {
     display: inline-flex;
     align-items: center;
@@ -164,6 +209,7 @@ button {
     color: var(--text-muted);
     border: 1px solid var(--border-light);
     transition: border-color 0.15s, color 0.15s, background 0.15s;
+    flex-shrink: 0;
 }
 
 .back-link:hover {
@@ -177,6 +223,29 @@ button {
 @media (max-width: 479px) {
     .back-link .label { display: none; }
     .back-link { padding: var(--space-2); }
+}
+
+/* Groupe d'actions à droite de la topbar (Tutoriel, Reset...) */
+.topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.topbar-icon-btn {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+@media (max-width: 479px) {
+    .topbar-icon-btn .label { display: none; }
+    .topbar-icon-btn { padding: var(--space-2); }
 }
 
 /* ========================================================

@@ -115,3 +115,96 @@ gameFinishedBtn.addEventListener('click', () => {
     setTimeout(() => speak('Game finished'), 900);
     phaseLabel.textContent = 'Game finished';
 });
+
+// ========================================
+// TUTORIAL LOGIC
+// ========================================
+const tutorialSteps = [
+    {
+        title: "Bienvenue sur le Timer de Match !",
+        text: "Ce minuteur est pensé pour l'arbitrage en paintball sportif : il annonce les temps forts à voix haute et bipe sur les dernières secondes, pour rester audible même sur un terrain bruyant."
+    },
+    {
+        title: "⏱️ Lancer un décompte",
+        text: "Clique sur une des durées (2:00, 1:00, 0:30, 0:20 ou 0:10) pour démarrer le chrono. La durée choisie est annoncée à voix haute dès le clic.<br><br>Le bouton <b>Arrêter</b> coupe le décompte en cours à tout moment."
+    },
+    {
+        title: "🔊 Annonces & bips automatiques",
+        text: "Pendant le décompte, chaque seuil clé franchi (2 min, 1 min, 30s, 20s, 10s) est annoncé à voix haute — même si le décompte a démarré sur une durée plus longue.<br><br>Dans les 10 dernières secondes, un bip retentit chaque seconde, puis un bip long marque la fin du temps."
+    },
+    {
+        title: "🏁 Game Finished",
+        text: "Ce bouton est indépendant du décompte : utilise-le pour signaler la fin de partie à n'importe quel moment. Il coupe le chrono en cours, joue un triple bip distinct, puis annonce « Game finished »."
+    }
+];
+
+let currentTutStep = 0;
+
+function updateTutorial() {
+    document.getElementById('tut-title').innerHTML = tutorialSteps[currentTutStep].title;
+    document.getElementById('tut-body').innerHTML = `<p>${tutorialSteps[currentTutStep].text}</p>`;
+
+    const progressContainer = document.querySelector('.tut-progress');
+    progressContainer.innerHTML = '';
+    for (let i = 0; i < tutorialSteps.length; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot' + (i === currentTutStep ? ' active' : '');
+        progressContainer.appendChild(dot);
+    }
+
+    document.getElementById('tut-prev').style.display = currentTutStep === 0 ? 'none' : 'block';
+
+    const nextBtn = document.getElementById('tut-next');
+    if (currentTutStep === tutorialSteps.length - 1) {
+        nextBtn.textContent = "Compris !";
+        nextBtn.classList.remove('btn-primary');
+        nextBtn.classList.add('btn-success');
+    } else {
+        nextBtn.textContent = "Suivant";
+        nextBtn.classList.add('btn-primary');
+        nextBtn.classList.remove('btn-success');
+    }
+}
+
+function openTutorial() {
+    currentTutStep = 0;
+    updateTutorial();
+    document.getElementById('tut-dismiss').checked = !!localStorage.getItem('tutorialDismissed_Timer');
+    document.getElementById('tutorialModal').style.display = 'flex';
+}
+
+function closeTutorial() {
+    if (document.getElementById('tut-dismiss').checked) {
+        localStorage.setItem('tutorialDismissed_Timer', 'true');
+    } else {
+        localStorage.removeItem('tutorialDismissed_Timer');
+    }
+    document.getElementById('tutorialModal').style.display = 'none';
+}
+
+document.getElementById('tutorialBtn').addEventListener('click', openTutorial);
+
+document.getElementById('tut-next').addEventListener('click', () => {
+    if (currentTutStep < tutorialSteps.length - 1) {
+        currentTutStep++;
+        updateTutorial();
+    } else {
+        closeTutorial();
+    }
+});
+
+document.getElementById('tut-prev').addEventListener('click', () => {
+    if (currentTutStep > 0) {
+        currentTutStep--;
+        updateTutorial();
+    }
+});
+
+document.getElementById('tut-close').addEventListener('click', closeTutorial);
+
+// Show tutorial automatically à chaque visite, sauf si l'utilisateur a choisi de ne plus le voir
+window.addEventListener('DOMContentLoaded', () => {
+    if (!localStorage.getItem('tutorialDismissed_Timer')) {
+        openTutorial();
+    }
+});

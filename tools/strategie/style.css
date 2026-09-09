@@ -24,30 +24,9 @@ body {
 #app { display: flex; flex-direction: column; height: 100vh; }
 
 /* ========================================================
-   TOPBAR — étend le composant partagé
+   TOPBAR — étend le composant partagé (voir core.css et
+   CLAUDE.md "Gabarit de topbar")
    ======================================================== */
-.topbar {
-    justify-content: center;
-    gap: var(--space-4);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.topbar-back { flex-shrink: 0; }
-
-.topbar-actions {
-    position: absolute;
-    right: var(--space-5);
-    display: flex;
-    gap: var(--space-2);
-}
-
-.topbar-icon-btn {
-    padding: var(--space-2) var(--space-4);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-weight: 600;
-}
-
 .btn-danger-outline {
     background: transparent;
     color: var(--danger);
@@ -59,14 +38,22 @@ body {
 }
 .btn-danger-outline:hover { background: var(--danger); color: var(--text); }
 
-/* STEPPER */
-.stepper {
+/* STEPPER — seconde ligne dédiée, sous la topbar */
+.stepper-row {
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-3) var(--space-6);
     display: flex;
-    gap: var(--space-6);
+    justify-content: center;
     overflow-x: auto;
     scrollbar-width: none;
 }
-.stepper::-webkit-scrollbar { display: none; }
+.stepper-row::-webkit-scrollbar { display: none; }
+
+.stepper {
+    display: flex;
+    gap: var(--space-6);
+}
 
 .step {
     color: var(--text-dim);
@@ -246,6 +233,9 @@ canvas { background: #ffffff; border-radius: var(--radius-md); box-shadow: var(-
 .modal-content p { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px; }
 .modal-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
 .modal-actions .btn { width: auto; padding-left: var(--space-5); padding-right: var(--space-5); }
+.tut-dismiss-check { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 auto 20px; cursor: pointer; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; }
+.tut-dismiss-check:hover { color: var(--text); }
+.tut-dismiss-check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 .tut-progress { display: flex; justify-content: center; gap: 8px; }
 .tut-progress .dot { width: 8px; height: 8px; background: var(--border-light); border-radius: 50%; transition: 0.3s; }
 .tut-progress .dot.active { background: var(--accent); transform: scale(1.3); }
@@ -260,10 +250,8 @@ canvas { background: #ffffff; border-radius: var(--radius-md); box-shadow: var(-
     body { height: auto; overflow: visible; }
     #app { height: auto; min-height: 100vh; }
 
-    .topbar { justify-content: flex-start; padding: 0 var(--space-4); }
-    .topbar-back { position: static; }
-    .stepper { flex: 1; justify-content: flex-start; }
-    .topbar-actions { position: static; margin-left: auto; }
+    .topbar { padding: 0 var(--space-4); }
+    .stepper-row { justify-content: flex-start; padding: var(--space-3) var(--space-4); }
     .topbar-icon-btn .label,
     .btn-danger-outline .label { display: none; }
 

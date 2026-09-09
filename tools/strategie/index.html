@@ -15,23 +15,28 @@
     <svg style="display:none">
         <defs>
             <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
+            <symbol id="icon-map" viewBox="0 0 24 24"><path d="M9 3.5 3.5 5.5v15L9 18.5l6 2 5.5-2v-15l-5.5 2-6-2Z"/><path d="M9 3.5v15"/><path d="M15 5.5v15"/></symbol>
         </defs>
     </svg>
 
     <div id="app">
-        <header class="topbar">
-            <a href="../../index.html" class="back-link topbar-back"><svg class="icon"><use href="#icon-arrow-left"/></svg><span class="label">Boîte à outils</span></a>
+        <header class="topbar topbar--tool">
+            <a href="../../index.html" class="back-link"><svg class="icon"><use href="#icon-arrow-left"/></svg><span class="label">Boîte à outils</span></a>
+            <div class="topbar-title hide-label-on-mobile"><svg class="icon"><use href="#icon-map"/></svg><span class="label">Stratégie & Tactique</span></div>
+            <div class="topbar-actions">
+                <button id="resetBtn" class="btn-danger-outline">🗑️ <span class="label">Reset Total</span></button>
+                <button id="tutorialBtn" class="btn-outline topbar-icon-btn">❓<span class="label">Tutoriel</span></button>
+            </div>
+        </header>
+
+        <nav class="stepper-row">
             <div class="stepper">
                 <div class="step active" id="indicator-step1"><span class="step-num">1</span><span class="step-label">Paramètres</span></div>
                 <div class="step" id="indicator-step2"><span class="step-num">2</span><span class="step-label">Modules</span></div>
                 <div class="step" id="indicator-step3"><span class="step-num">3</span><span class="step-label">Déploiement</span></div>
                 <div class="step" id="indicator-step4"><span class="step-num">4</span><span class="step-label">Validation</span></div>
             </div>
-            <div class="topbar-actions">
-                <button id="tutorialBtn" class="btn-outline topbar-icon-btn">❓ <span class="label">Tutoriel</span></button>
-                <button id="resetBtn" class="btn-danger-outline">🗑️ <span class="label">Reset Total</span></button>
-            </div>
-        </header>
+        </nav>
 
         <main class="main-content">
             <aside class="sidebar">
@@ -216,6 +221,10 @@
                 <button id="tut-next" class="btn btn-primary">Suivant</button>
                 <button id="tut-close" class="btn btn-outline">Passer</button>
             </div>
+            <label class="tut-dismiss-check">
+                <input type="checkbox" id="tut-dismiss">
+                <span>Ne plus me le rappeler</span>
+            </label>
             <div class="tut-progress">
                 <span class="dot active"></span>
                 <span class="dot"></span>
