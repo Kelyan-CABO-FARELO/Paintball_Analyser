@@ -1,0 +1,227 @@
+/* ========================================================
+   PAINTBALL ANALYSER — DESIGN SYSTEM
+   Fichier partagé par le hub et tous les outils.
+   Ne pas dupliquer ces règles dans les style.css locaux :
+   surcharger ou étendre uniquement ce qui est spécifique
+   à une page.
+   ======================================================== */
+
+:root {
+    /* --- Couleurs de fond (thème "terrain de nuit") --- */
+    --bg: #0c1210;
+    --bg-raised: #121915;
+    --panel: #182019;
+    --panel-hover: #202a22;
+    --border: #2a342c;
+    --border-light: #3d4a3f;
+
+    /* --- Texte --- */
+    --text: #f2f5ef;
+    --text-muted: #9fac9c;
+    --text-dim: #66756c;
+
+    /* --- Accent (orange terrain / marqueur) --- */
+    --accent: #ec6a1e;
+    --accent-hover: #ff8a3d;
+    --accent-ink: #1d1006;
+    --accent-soft: rgba(236, 106, 30, 0.14);
+    --accent-soft-border: rgba(236, 106, 30, 0.4);
+
+    /* --- États sémantiques --- */
+    --success: #6bbf4a;
+    --success-soft: rgba(107, 191, 74, 0.14);
+    --danger: #e2534d;
+    --danger-soft: rgba(226, 83, 77, 0.14);
+
+    /* --- Typographie --- */
+    --font-display: 'Manrope', 'Segoe UI', system-ui, sans-serif;
+    --font-body: 'Inter', 'Segoe UI', system-ui, sans-serif;
+
+    /* --- Échelle d'espacement --- */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 48px;
+
+    /* --- Rayons --- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-full: 999px;
+
+    /* --- Élévation --- */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+
+    color-scheme: dark;
+}
+
+/* ========================================================
+   RESET
+   ======================================================== */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-display);
+    color: var(--text);
+    margin: 0;
+}
+
+p { margin: 0; }
+
+a { color: inherit; }
+
+button {
+    font-family: inherit;
+    color: inherit;
+}
+
+/* Fond de page commun : aplat sombre + vignette discrète, sans motif générique */
+.app-bg {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 900px 500px at 50% -10%, rgba(236, 106, 30, 0.08), transparent 60%),
+        var(--bg);
+}
+
+:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+::selection {
+    background: var(--accent-soft-border);
+    color: var(--text);
+}
+
+/* ========================================================
+   ICÔNES
+   ======================================================== */
+.icon {
+    width: 1em;
+    height: 1em;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+}
+
+/* ========================================================
+   TOPBAR — partagée par le hub et les outils
+   ======================================================== */
+.topbar {
+    background: var(--bg-raised);
+    border-bottom: 1px solid var(--border);
+    height: 68px;
+    padding: 0 var(--space-6);
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    position: relative;
+}
+
+.topbar .brand {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--text);
+}
+
+.topbar .brand .icon {
+    width: 22px;
+    height: 22px;
+    color: var(--accent);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.back-link:hover {
+    background: var(--panel-hover);
+    border-color: var(--border-light);
+    color: var(--text);
+}
+
+/* Sur mobile, le libellé disparaît : il ne reste que la flèche,
+   pour ne jamais entrer en collision avec le titre de la page. */
+@media (max-width: 479px) {
+    .back-link .label { display: none; }
+    .back-link { padding: var(--space-2); }
+}
+
+/* ========================================================
+   BOUTONS
+   ======================================================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-5);
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+}
+
+.btn:active { transform: translateY(1px); }
+
+.btn-primary {
+    background: var(--accent);
+    color: var(--accent-ink);
+}
+.btn-primary:hover { background: var(--accent-hover); }
+
+.btn-outline {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+}
+.btn-outline:hover { background: var(--panel-hover); color: var(--text); }
+
+.btn-danger {
+    background: transparent;
+    border: 2px solid var(--danger);
+    color: var(--danger);
+}
+.btn-danger:hover { background: var(--danger); color: var(--text); }
+
+/* ========================================================
+   BREAKPOINTS DE RÉFÉRENCE (mobile-first)
+   --bp-sm : 480px  (grand téléphone)
+   --bp-md : 768px  (tablette)
+   --bp-lg : 1024px (petit écran / tablette paysage)
+   --bp-xl : 1280px (bureau)
+   ======================================================== */

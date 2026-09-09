@@ -1,88 +1,61 @@
-:root {
-    --bg: #0f172a;
-    --panel: #1e293b;
-    --panel-hover: #24344f;
-    --border: #334155;
-    --border-light: #475569;
-    --text: #f8fafc;
-    --text-muted: #94a3b8;
-    --text-dim: #64748b;
-    --accent: #38bdf8;
-    --success: #22c55e;
-    --danger: #ef4444;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-    font-family: 'Inter', sans-serif;
-    color: var(--text);
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at 1px 1px, rgba(148, 163, 184, 0.14) 1px, transparent 0) 0 0 / 26px 26px,
-        var(--bg);
-}
-
-.topbar {
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    height: 70px;
-    padding: 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.back-link {
-    position: absolute;
-    left: 20px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 600;
-    text-decoration: none;
-    color: var(--text-muted);
-    border: 1px solid var(--border-light);
-}
-
-.back-link:hover { background: var(--border); color: var(--text); }
+/* ========================================================
+   TIMER — les tokens et la topbar viennent de
+   assets/css/core.css. Ce fichier ne contient que ce qui
+   est spécifique à cet outil.
+   ======================================================== */
 
 .topbar .title {
+    font-family: var(--font-display);
     font-weight: 800;
-    font-size: 1.1rem;
-    letter-spacing: 0.02em;
+    font-size: 1.05rem;
+    letter-spacing: 0.01em;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+
+.topbar .title .icon { color: var(--accent); width: 20px; height: 20px; }
 
 .timer-main {
     max-width: 480px;
     margin: 0 auto;
-    padding: 40px 20px 80px;
+    padding: var(--space-8) var(--space-5) var(--space-12);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 28px;
+    gap: var(--space-6);
+}
+
+@media (min-width: 768px) {
+    .timer-main { padding-top: var(--space-12); gap: var(--space-8); }
 }
 
 .display-panel {
     background: var(--panel);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     width: 100%;
-    padding: 32px 20px;
+    padding: var(--space-8) var(--space-5);
     text-align: center;
+    box-shadow: var(--shadow-sm);
 }
 
 .clock {
-    font-size: 4.5rem;
+    font-family: var(--font-display);
+    font-size: clamp(3.2rem, 14vw, 5rem);
     font-weight: 800;
     font-variant-numeric: tabular-nums;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
+    color: var(--text);
 }
 
 .clock.warning { color: var(--danger); }
 
 .phase-label {
-    margin-top: 10px;
+    margin-top: var(--space-2);
     color: var(--text-muted);
     font-size: 0.95rem;
     min-height: 1.2em;
@@ -91,38 +64,34 @@ body {
 .durations-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
+    gap: var(--space-3);
     width: 100%;
+}
+
+@media (min-width: 400px) {
+    .durations-grid { grid-template-columns: repeat(5, 1fr); }
 }
 
 .duration-btn {
     background: var(--panel);
     border: 1px solid var(--border-light);
     color: var(--text);
-    border-radius: 8px;
-    padding: 16px 8px;
+    border-radius: var(--radius-sm);
+    padding: var(--space-4) var(--space-2);
     font-size: 1.05rem;
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
     cursor: pointer;
     transition: 0.15s;
 }
 
 .duration-btn:hover { background: var(--panel-hover); border-color: var(--accent); color: var(--accent); }
-.duration-btn.running { border-color: var(--accent); color: var(--accent); background: var(--panel-hover); }
+.duration-btn.running { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 
 .stop-btn {
     width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border-light);
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.15s;
+    padding: var(--space-3);
 }
-
-.stop-btn:hover { background: var(--border); color: var(--text); }
 
 .divider {
     width: 100%;
@@ -132,16 +101,22 @@ body {
 
 .game-finished-btn {
     width: 100%;
-    padding: 22px;
-    border-radius: 10px;
+    padding: var(--space-5);
+    border-radius: var(--radius-md);
     background: transparent;
     border: 2px solid var(--danger);
     color: var(--danger);
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     font-weight: 800;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     cursor: pointer;
     transition: 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
 }
+
+.game-finished-btn .icon { width: 20px; height: 20px; }
 
 .game-finished-btn:hover { background: var(--danger); color: var(--text); }

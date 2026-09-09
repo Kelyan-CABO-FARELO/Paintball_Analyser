@@ -3,14 +3,14 @@
 // et un href une fois l'outil prêt — aucune autre modification n'est nécessaire.
 const TOOLS = [
     {
-        icon: '🗺️',
+        icon: 'icon-map',
         title: 'Stratégie & Tactique',
         description: "Planifie tes déploiements : mode Live, Stratégie Pro, Assistant Break et génération IA de stratégie.",
         href: 'tools/strategie/index.html',
         status: 'active',
     },
     {
-        icon: '⏱️',
+        icon: 'icon-timer',
         title: 'Timer',
         description: "Minuteur de match pour le paintball sportif, avec annonces vocales et bips.",
         href: 'tools/timer/index.html',
@@ -33,6 +33,7 @@ function renderTools() {
         if (tool.empty) {
             return `
                 <div class="tool-card disabled empty">
+                    <span class="icon-badge"><svg class="icon"><use href="#icon-lock"/></svg></span>
                     <span class="status">${statusLabel}</span>
                 </div>
             `;
@@ -44,7 +45,7 @@ function renderTools() {
         return `
             <${tag} class="tool-card ${isActive ? 'active' : 'disabled'}" ${hrefAttr}>
                 <div class="row">
-                    <span class="icon">${tool.icon}</span>
+                    <span class="icon-badge"><svg class="icon"><use href="#${tool.icon}"/></svg></span>
                     <h3>${tool.title}</h3>
                 </div>
                 ${descriptionHtml}

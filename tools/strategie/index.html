@@ -5,22 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stratégie & Tactique — Paintball Analyser</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/core.css">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
+    <svg style="display:none">
+        <defs>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
+        </defs>
+    </svg>
+
     <div id="app">
         <header class="topbar">
-            <a href="../../index.html" class="btn-outline" style="position: absolute; left: 20px; padding: 8px 16px; border-radius: 6px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center;">⬅️ Boîte à outils</a>
+            <a href="../../index.html" class="back-link topbar-back"><svg class="icon"><use href="#icon-arrow-left"/></svg><span class="label">Boîte à outils</span></a>
             <div class="stepper">
-                <div class="step active" id="indicator-step1"><span class="step-num">1</span> Paramètres</div>
-                <div class="step" id="indicator-step2"><span class="step-num">2</span> Modules</div>
-                <div class="step" id="indicator-step3"><span class="step-num">3</span> Déploiement</div>
-                <div class="step" id="indicator-step4"><span class="step-num">4</span> Validation</div>
+                <div class="step active" id="indicator-step1"><span class="step-num">1</span><span class="step-label">Paramètres</span></div>
+                <div class="step" id="indicator-step2"><span class="step-num">2</span><span class="step-label">Modules</span></div>
+                <div class="step" id="indicator-step3"><span class="step-num">3</span><span class="step-label">Déploiement</span></div>
+                <div class="step" id="indicator-step4"><span class="step-num">4</span><span class="step-label">Validation</span></div>
             </div>
-            <div style="position: absolute; right: 20px; display: flex; gap: 10px;">
-                <button id="tutorialBtn" class="btn-outline" style="padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600;">❓ Tutoriel</button>
-                <button id="resetBtn" class="btn-danger-outline">🗑️ Reset Total</button>
+            <div class="topbar-actions">
+                <button id="tutorialBtn" class="btn-outline topbar-icon-btn">❓ <span class="label">Tutoriel</span></button>
+                <button id="resetBtn" class="btn-danger-outline">🗑️ <span class="label">Reset Total</span></button>
             </div>
         </header>
 
@@ -31,17 +40,17 @@
                     <h3>⚙️ 1. Mode & Terrain</h3>
                     <p class="help-text">Choisis ton mode de planification avant de commencer.</p>
                     
-                    <div class="mode-switch" style="margin-bottom: 20px; flex-wrap: wrap;">
-                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')" style="flex: 1 1 45%;">🧮 Live</div>
-                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')" style="flex: 1 1 45%;">🗺️ Pro</div>
-                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')" style="flex: 1 1 45%;">🏃 Break</div>
-                        <div class="stance-btn" id="btn-mode-ai" onclick="setAppMode('ai')" style="flex: 1 1 45%; color: #a855f7; border-color: #a855f7;">🤖 IA Auto</div>
+                    <div class="mode-switch mode-switch-grid">
+                        <div class="stance-btn active" id="btn-mode-calc" onclick="setAppMode('calc')">🧮 Live</div>
+                        <div class="stance-btn" id="btn-mode-strat" onclick="setAppMode('strat')">🗺️ Pro</div>
+                        <div class="stance-btn" id="btn-mode-break" onclick="setAppMode('break')">🏃 Break</div>
+                        <div class="stance-btn stance-btn-ai" id="btn-mode-ai" onclick="setAppMode('ai')">🤖 IA Auto</div>
                     </div>
 
-                    <input type="file" id="imageInput" accept="image/*" class="file-input" style="margin-bottom: 5px;">
-                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="loadLayoutLocal()">📂 Charger le layout sauvegardé</button>
-                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="document.getElementById('importLayoutInput').click()">📁 Importer un fichier</button>
+                    <input type="file" id="imageInput" accept="image/*" class="file-input file-input-tight">
+                    <div class="btn-row">
+                        <button class="btn btn-outline btn-compact" onclick="loadLayoutLocal()">📂 Charger le layout sauvegardé</button>
+                        <button class="btn btn-outline btn-compact" onclick="document.getElementById('importLayoutInput').click()">📁 Importer un fichier</button>
                         <input type="file" id="importLayoutInput" accept=".json" style="display:none">
                     </div>
                     <button id="drawFieldBtn" class="btn btn-secondary">📏 Tracer les limites du terrain</button>
@@ -68,14 +77,14 @@
                     </div>
 
                     <div class="slider-group">
-                        <label>Dimensions : <span id="sizeValue" style="color:#38bdf8; font-weight:bold;">Taille: 25 | Angle: 0°</span></label>
+                        <label>Dimensions : <span id="sizeValue" class="accent-text">Taille: 25 | Angle: 0°</span></label>
                         <input type="range" id="sizeSlider" min="15" max="50" value="25">
                         <p class="help-text">Molette = Taille | Shift+Molette = Angle</p>
                     </div>
 
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="saveLayoutLocal()">💾 Sauvegarder Layout (Local)</button>
-                        <button class="btn btn-outline" style="font-size: 0.8rem; padding: 8px; flex: 1;" onclick="exportLayout()">📤 Exporter (Fichier)</button>
+                    <div class="btn-row btn-row-top">
+                        <button class="btn btn-outline btn-compact" onclick="saveLayoutLocal()">💾 Sauvegarder Layout (Local)</button>
+                        <button class="btn btn-outline btn-compact" onclick="exportLayout()">📤 Exporter (Fichier)</button>
                     </div>
 
                     <div class="step-actions">
@@ -97,8 +106,8 @@
                         </div>
                     </div>
 
-                    <div id="strategy-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
-                        <label style="color:#38bdf8;">Planification : Joueur <span id="currentPlayerNum">1</span></label>
+                    <div id="strategy-tools-step3" class="tool-section" style="display: none;">
+                        <label class="accent-text">Planification : Joueur <span id="currentPlayerNum">1</span></label>
                         <div class="stance-selector">
                             <div class="stance-btn active" id="btn-tool-place" onclick="setTool('place')">🧍 Placer</div>
                             <div class="stance-btn" id="btn-tool-select" onclick="setTool('select')">🖱️ Lignes</div>
@@ -106,27 +115,27 @@
                         </div>
                     </div>
 
-                    <div id="break-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
-                        <label style="color:#22c55e;">Analyse du Break</label>
+                    <div id="break-tools-step3" class="tool-section" style="display: none;">
+                        <label class="success-text">Analyse du Break</label>
                         <div class="stance-selector">
                             <div class="stance-btn active" id="btn-tool-break-myrun" onclick="setBreakTool('myrun')">🔵 Notre Course</div>
                             <div class="stance-btn" id="btn-tool-break-opprun" onclick="setBreakTool('opprun')">🔴 Course Adverse</div>
                         </div>
                     </div>
 
-                    <div id="ai-tools-step3" style="display: none; margin-top: 20px; border-top: 1px solid #334155; padding-top: 15px;">
-                        <label style="color:#a855f7;">Génération IA</label>
-                        <p class="help-text" style="margin-bottom:10px;">L'IA va analyser les modules et générer un plan de jeu complet.</p>
+                    <div id="ai-tools-step3" class="tool-section" style="display: none;">
+                        <label class="ai-text">Génération IA</label>
+                        <p class="help-text help-text-tight">L'IA va analyser les modules et générer un plan de jeu complet.</p>
 
-                        <label style="margin-bottom: 5px; display: block; font-size: 0.85rem; color: #94a3b8;">Personnaliser la menace (Optionnel)</label>
-                        <div class="stance-selector" style="margin-bottom: 15px;">
+                        <label class="subtle-label">Personnaliser la menace (Optionnel)</label>
+                        <div class="stance-selector stance-selector-spaced">
                             <div class="stance-btn active" id="btn-tool-ai-none" onclick="setAiTool('none')">🖱️ Rien</div>
                             <div class="stance-btn" id="btn-tool-ai-enemy" onclick="setAiTool('enemy')">🔴 Placer Ennemi</div>
                         </div>
 
-                        <div class="stance-selector" style="flex-direction: column; gap: 10px; width: 100%;">
-                            <button class="btn btn-outline" onclick="generateAIStrategy('defensive')" style="width: 100%; border-color: #3b82f6; color: #3b82f6;">🛡️ Générer Stratégie Défensive</button>
-                            <button class="btn btn-outline" onclick="generateAIStrategy('offensive')" style="width: 100%; border-color: #ef4444; color: #ef4444;">⚔️ Générer Stratégie Offensive</button>
+                        <div class="stance-selector stance-selector-stack">
+                            <button class="btn btn-outline btn-block btn-outline-info" onclick="generateAIStrategy('defensive')">🛡️ Générer Stratégie Défensive</button>
+                            <button class="btn btn-outline btn-block btn-outline-danger" onclick="generateAIStrategy('offensive')">⚔️ Générer Stratégie Offensive</button>
                         </div>
                     </div>
 
@@ -163,25 +172,25 @@
                             <div class="chat-body">
                                 <em>La messagerie en direct arrivera dans la prochaine mise à jour BDD.</em>
                             </div>
-                            <input type="text" placeholder="Écrire un message..." disabled style="width:100%; padding:8px; margin-top:10px; background:#0f172a; border:1px solid #334155; border-radius:4px; color:#64748b;">
+                            <input type="text" placeholder="Écrire un message..." disabled class="chat-input">
                         </div>
                     </div>
 
                     <div id="recap-break" style="display: none;">
                         <p class="help-text">Analyse d'interception validée.</p>
-                        <div class="stats-box" style="border-left-color: #22c55e;">
+                        <div class="stats-box stats-box-success">
                             <p>Fenêtres de tir : <strong id="breakLineCount">0</strong></p>
                         </div>
                     </div>
 
                     <div id="recap-ai" style="display: none;">
                         <p class="help-text">Stratégie IA générée validée.</p>
-                        <div class="stats-box" style="border-left-color: #a855f7;">
+                        <div class="stats-box stats-box-ai">
                             <p>Joueurs placés automatiquement : <strong>5</strong></p>
                         </div>
                     </div>
 
-                    <div class="step-actions" style="margin-top: 20px; flex-direction: column; gap: 10px;">
+                    <div class="step-actions step-actions-column">
                         <button class="btn btn-primary" onclick="exportPlan()">📸 Exporter le Plan (Image)</button>
                         <button class="btn btn-outline" onclick="goToStep(3)">⬅️ Modifier la tactique</button>
                     </div>

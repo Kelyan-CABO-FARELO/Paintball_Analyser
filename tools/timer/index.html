@@ -5,13 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timer de Match — Paintball Analyser</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../assets/css/core.css">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="app-bg">
+    <svg style="display:none">
+        <defs>
+            <symbol id="icon-timer" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 13V9"/><path d="M9.5 2.5h5"/><path d="M18.5 6 20 4.5"/></symbol>
+            <symbol id="icon-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 6-6 6 6 6"/></symbol>
+            <symbol id="icon-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4h13l-3 4.5L18 13H5"/></symbol>
+            <symbol id="icon-square" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></symbol>
+        </defs>
+    </svg>
+
     <header class="topbar">
-        <a href="../../index.html" class="back-link">⬅️ Boîte à outils</a>
-        <div class="title">⏱️ Timer de Match</div>
+        <a href="../../index.html" class="back-link"><svg class="icon"><use href="#icon-arrow-left"/></svg><span class="label">Boîte à outils</span></a>
+        <div class="title"><svg class="icon"><use href="#icon-timer"/></svg> Timer de Match</div>
     </header>
 
     <main class="timer-main">
@@ -28,11 +40,11 @@
             <button class="duration-btn" data-seconds="10" data-text="Ten seconds">0:10</button>
         </div>
 
-        <button id="stopBtn" class="btn-outline stop-btn">⏹️ Arrêter</button>
+        <button id="stopBtn" class="btn-outline stop-btn"><svg class="icon"><use href="#icon-square"/></svg> Arrêter</button>
 
         <div class="divider"></div>
 
-        <button id="gameFinishedBtn" class="game-finished-btn">🏁 Game Finished</button>
+        <button id="gameFinishedBtn" class="game-finished-btn"><svg class="icon"><use href="#icon-flag"/></svg> Game Finished</button>
     </main>
 
     <script src="script.js"></script>
