@@ -28,15 +28,78 @@
     .hub-main { padding: var(--space-10) var(--space-6) var(--space-12); }
 }
 
-.section-label {
+/* ========================================================
+   BOÎTES DÉPLIANTES — regroupent les outils par type
+   (outils de match, gestion du club...)
+   ======================================================== */
+.tool-group {
+    margin-bottom: var(--space-5);
+}
+
+.tool-group summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.tool-group summary::-webkit-details-marker { display: none; }
+.tool-group summary::marker { content: ''; display: none; }
+
+.tool-group summary:hover {
+    background: var(--panel-hover);
+    border-color: var(--border-light);
+}
+
+.tool-group .chevron {
+    width: 16px;
+    height: 16px;
+    color: var(--text-dim);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+}
+
+.tool-group[open] .chevron { transform: rotate(180deg); }
+
+.tool-group .group-icon {
+    width: 17px;
+    height: 17px;
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.tool-group .group-title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+    color: var(--text);
+}
+
+.tool-group .group-count {
+    margin-left: auto;
+    background: var(--bg-raised);
+    color: var(--text-dim);
     font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: var(--space-5);
-    padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--border);
+    padding: 2px 9px;
+    border-radius: var(--radius-full);
+}
+
+.tool-group .tools-grid {
+    margin-top: var(--space-4);
+    animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .tools-grid {
