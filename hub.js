@@ -24,6 +24,10 @@ const TOOLS = [
         status: 'active',
         category: 'match',
     },
+    { status: 'soon', empty: true, category: 'match' },
+    { status: 'soon', empty: true, category: 'match' },
+    { status: 'soon', empty: true, category: 'match' },
+    { status: 'soon', empty: true, category: 'match' },
     { status: 'soon', empty: true, category: 'gestion' },
     { status: 'soon', empty: true, category: 'gestion' },
     { status: 'soon', empty: true, category: 'gestion' },
@@ -60,13 +64,17 @@ function toolCardHtml(tool) {
 }
 
 function categoryGroupHtml(category, tools, open) {
+    // Les cartes "empty" sont un simple remplissage visuel (pour que la
+    // grille paraisse fournie) : on ne les compte pas dans le badge.
+    const realCount = tools.filter(tool => !tool.empty).length;
+    const countHtml = realCount > 0 ? `<span class="group-count">${realCount}</span>` : '';
     return `
         <details class="tool-group"${open ? ' open' : ''}>
             <summary>
                 <svg class="icon chevron"><use href="#icon-chevron-down"/></svg>
                 <svg class="icon group-icon"><use href="#${category.icon}"/></svg>
                 <span class="group-title">${category.label}</span>
-                <span class="group-count">${tools.length}</span>
+                ${countHtml}
             </summary>
             <div class="tools-grid">${tools.map(toolCardHtml).join('')}</div>
         </details>
